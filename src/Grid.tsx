@@ -7,8 +7,8 @@ const baseTempo = 120; // base tempo in BPM
 
 const Grid: React.FC = () => {
   const [activeCells, setActiveCells] = useState<Set<number>>(new Set());
-  const [oscillators, setOscillators] = useState<Map<number, { oscillator: OscillatorNode, gainNode: GainNode }>>(new Map());
-  const [intervals, setIntervals] = useState<Map<number, number>>(new Map());
+  const [oscillators] = useState<Map<number, { oscillator: OscillatorNode, gainNode: GainNode }>>(new Map());
+  const [intervals] = useState<Map<number, number>>(new Map());
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
