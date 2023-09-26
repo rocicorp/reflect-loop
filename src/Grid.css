@@ -1,0 +1,42 @@
+/* src/Grid.css */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 8px;
+  }
+  
+  .cell {
+    width: 48px;
+    height: 48px;
+    background-color: rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    position: relative;
+  }
+
+  .cell::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(252, 32, 138, 0.2);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .cell:hover::before {
+    opacity: 1;
+  }
+  
+  .cell.active {
+    background-color: #fc208a;
+  }
+
+  .waveform {
+    display: block;
+    margin: 20px auto;
+    background: rgba(0, 0, 0, 1);
+}
