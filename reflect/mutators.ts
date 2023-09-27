@@ -19,17 +19,24 @@
 import type {WriteTransaction} from '@rocicorp/reflect';
 
 export const mutators = {
-  toggleCell,
+  activateCell,
+  deactivateCell
 };
 
 export type M = typeof mutators;
 
-
-async function toggleCell(
+async function activateCell(
   tx: WriteTransaction,
   { key }: { key: string }
 ) {
-  const prev = await tx.get<boolean>(key);
-  const next = !prev;
-  await tx.put(key, next);
+  console.log(`activating cell ${key}`);
+  await tx.put(key, true);
+}
+
+async function deactivateCell(
+  tx: WriteTransaction,
+  { key }: { key: string }
+) {
+  console.log(`deactivating cell ${key}`);
+  await tx.put(key, false);
 }
