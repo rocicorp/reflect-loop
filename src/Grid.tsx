@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './Grid.css';
+import { Reflect } from "@rocicorp/reflect/client";
+import { mutators } from "../reflect/mutators.ts";
+
+const r = new Reflect({
+  userID: "someUser",
+  roomID: "myRoom",
+  socketOrigin: "ws://localhost:8080",
+  mutators,
+});
 
 const gridSize = 8;
-const fundamentalFrequency = 80; // starting frequency (in Hz)
-const baseTempo = 120; // base tempo in BPM
+const fundamentalFrequency = 80;
+const baseTempo = 40;
 
 const Grid: React.FC = () => {
   const [activeCells, setActiveCells] = useState<Set<number>>(new Set());
@@ -11,45 +20,38 @@ const Grid: React.FC = () => {
   const [intervals] = useState<Map<number, number>>(new Map());
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   const [audioContext] = useState(() => new (window.AudioContext || (window as any).webkitAudioContext)());
   const analyserRef = useRef<AnalyserNode>(audioContext.createAnalyser());
   analyserRef.current.fftSize = 2048;
   const bufferLength = analyserRef.current.frequencyBinCount;
   const dataArray = new Uint8Array(bufferLength);
 
-  // Compressor
   const compressor = audioContext.createDynamicsCompressor();
-  compressor.threshold.setValueAtTime(-50, audioContext.currentTime); // Set threshold to -50 dB
-  compressor.knee.setValueAtTime(40, audioContext.currentTime);   // A smoother knee will reduce the harshness of the compression
-  compressor.ratio.setValueAtTime(12, audioContext.currentTime);  // Compression ratio
-  compressor.attack.setValueAtTime(0, audioContext.currentTime);  // Fastest attack
-  compressor.release.setValueAtTime(0.25, audioContext.currentTime); // Quarter of a second release
+  compressor.threshold.setValueAtTime(-40, audioContext.currentTime);
+  compressor.knee.setValueAtTime(5, audioContext.currentTime);
+  compressor.ratio.setValueAtTime(20, audioContext.currentTime);
+  compressor.attack.setValueAtTime(0, audioContext.currentTime);
+  compressor.release.setValueAtTime(0.25, audioContext.currentTime);
 
-  // Play a tone
   const playTone = (frequency: number) => {
     const oscillator = audioContext.createOscillator();
-    oscillator.type = 'triangle';  // or 'sine'
+    oscillator.type = 'triangle';
     oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
 
     const gainNode = audioContext.createGain();
-    
-    // Lowpass filter
     const filter = audioContext.createBiquadFilter();
     filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(700, audioContext.currentTime);  // Adjust as per your preference
+    filter.frequency.setValueAtTime(700, audioContext.currentTime);
 
     gainNode.connect(compressor);
     compressor.connect(audioContext.destination);
-    
     oscillator.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(analyserRef.current);
     gainNode.connect(audioContext.destination);
 
-    // More gradual fade-in/fade-out
     gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.35, audioContext.currentTime + 0.2);  // 200ms attack
+    gainNode.gain.linearRampToValueAtTime(0.35, audioContext.currentTime + 0.2);
     oscillator.start();
 
     return { oscillator, gainNode };
@@ -59,12 +61,11 @@ const Grid: React.FC = () => {
     const { oscillator, gainNode } = oscillators.get(index) || {};
 
     if (gainNode && oscillator) {
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3); // 300ms release
-      oscillator.stop(audioContext.currentTime + 0.31); // Stop oscillator shortly after release
+      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+      oscillator.stop(audioContext.currentTime + 0.31);
     }
   }
 
-  // Waveform visualizer
   const drawWaveform = () => {
     if (!canvasRef.current || !analyserRef.current) return;
 
@@ -109,45 +110,94 @@ const Grid: React.FC = () => {
   };
 
   useEffect(() => {
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    const unsubscribes = Array.from({ length: gridSize * gridSize }).map((_, index) => {
+      return r.subscribe(
+        (tx) => tx.get(`cell-${index}`),
+        {
+          onData: (value: any) => {
+            if (typeof value === "boolean") {
+                setActiveCells(prev => {
+                    const updatedSet = new Set([...prev]);
+                    if (value) {
+                        updatedSet.add(index);
+                    } else {
+                        updatedSet.delete(index);
+                    }
+                    return updatedSet;
+                });
+            }
+          },
+          onError: (error: any) => {
+            console.error("Error with Reflect subscription:", error);
+          }
+        }
+      );
+    });
+
     drawWaveform();
 
-    // Cleanup on component unmount
     return () => {
+      unsubscribes.forEach(unsubscribe => unsubscribe());
       activeCells.forEach(cell => {
         stopTone(cell);
         clearInterval(intervals.get(cell)!);
       });
     };
-  }, []); 
+  }, []);
+
+  useEffect(() => {
+    activeCells.forEach(index => {
+      if (!oscillators.has(index)) {
+        const row = Math.floor(index / gridSize);
+        const col = index % gridSize;
+        const frequency = fundamentalFrequency * (row + 1);
+        const columnTempo = baseTempo * (1 + col * 0.5);
+
+        const noteLength = 0.24;  
+        const totalDuration = (60 / columnTempo); 
+
+        const playRepeatedTone = () => {
+          stopTone(index);
+          const { oscillator, gainNode } = playTone(frequency);
+          oscillators.set(index, { oscillator, gainNode });
+
+          gainNode.gain.setValueAtTime(0.25, audioContext.currentTime); 
+          gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + noteLength); 
+          oscillator.stop(audioContext.currentTime + noteLength);  
+        };
+  
+        playRepeatedTone();
+        const intervalID = window.setInterval(playRepeatedTone, totalDuration * 1000) as unknown as number;
+        intervals.set(index, intervalID);
+      }
+    });
+
+    oscillators.forEach((_, index) => {
+      if (!activeCells.has(index)) {
+        stopTone(index);
+        clearInterval(intervals.get(index)!);
+        oscillators.delete(index);
+      }
+    });
+  }, [activeCells]);
 
   const toggleCellState = (index: number) => {
-    const row = Math.floor(index / gridSize);
-    const col = index % gridSize;
-    const frequency = fundamentalFrequency * (row + 1);
-    const columnTempo = baseTempo * (1 + col * 0.5);
-
+    const key = `cell-${index}`;
     if (activeCells.has(index)) {
-      activeCells.delete(index);
-      stopTone(index);
-      clearInterval(intervals.get(index)!);
-      intervals.delete(index);
-      oscillators.delete(index);
+      r.mutate.deactivateCell({ key });
+      setActiveCells(prev => {
+        const updatedSet = new Set([...prev]);
+        updatedSet.delete(index);
+        return updatedSet;
+      });
     } else {
-      const { oscillator, gainNode } = playTone(frequency);
-      oscillators.set(index, { oscillator, gainNode });
-      activeCells.add(index);
-      
-      const playRepeatedTone = () => {
-        stopTone(index);
-        const { oscillator, gainNode } = playTone(frequency);
-        oscillators.set(index, { oscillator, gainNode });
-      };
-
-      const intervalID = setInterval(playRepeatedTone, (60 / columnTempo) * 1000);
-      intervals.set(index, intervalID);
+      r.mutate.activateCell({ key });
+      setActiveCells(prev => new Set([...prev, index]));
     }
-
-    setActiveCells(new Set([...activeCells]));
   };
 
   return (
