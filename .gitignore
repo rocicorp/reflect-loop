@@ -13,7 +13,7 @@ dist-ssr
 *.local
 
 # Reflect
-reflect/data
+.reflect/data
 
 # Editor directories and files
 .vscode/*
