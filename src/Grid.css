@@ -17,7 +17,7 @@
 }
 
 .cell::before {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
@@ -46,7 +46,6 @@
   margin: 20px auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 
 /* Animations */
 @keyframes pulse {

@@ -1,8 +1,11 @@
-import React, {useState, useEffect, useRef} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import './Grid.css';
+import {Reflect} from '@rocicorp/reflect/client';
+import {mutators} from '../reflect/mutators';
+import {useSubscribe} from 'replicache-react';
+import {listCells} from './cell';
 
-const gridSize = 8;
-
+/*
 const calculateNextStartTime = (
   sampleDuration: number,
   audioContext: AudioContext,
@@ -15,15 +18,26 @@ const calculateNextStartTime = (
     Math.ceil(audioContext.currentTime / sampleDuration) * sampleDuration;
   return nextQuantizedTime;
 };
+*/
 
-const Grid: React.FC = () => {
-  const [activeCells, setActiveCells] = useState<Set<number>>(new Set());
+const r = new Reflect({
+  roomID: 'r1',
+  userID: 'nanoid',
+  mutators,
+  socketOrigin: 'ws://localhost:8080',
+});
+
+function Grid() {
+  const cells = useSubscribe(r, listCells, null);
+
+  const [, setAudioBuffers] = useState<AudioBuffer[]>([]);
+  /*
   const [queuedCells, setQueuedCells] = useState<Set<number>>(new Set());
-  const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [sampleSources, setSampleSources] = useState<
     (AudioBufferSourceNode | null)[]
   >(Array(gridSize * gridSize).fill(null));
   const [globalStartTime, setGlobalStartTime] = useState<number | null>(null);
+  */
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const audioContextRef = useRef(new window.AudioContext());
@@ -112,30 +126,11 @@ const Grid: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toggleCellState = (index: number) => {
-    setActiveCells(prev => {
-      const updated = new Set([...prev]);
-      if (updated.has(index)) {
-        updated.delete(index);
-      } else {
-        for (let i = 0; i < gridSize; i++) {
-          updated.delete(i + gridSize * Math.floor(index / gridSize));
-        }
-        updated.add(index);
-      }
-      return updated;
-    });
-
-    // If we're activating the cell, add it to queued cells.
-    if (!activeCells.has(index)) {
-      setQueuedCells(prev => {
-        const updated = new Set([...prev]);
-        updated.add(index);
-        return updated;
-      });
-    }
+  const handleCellClick = (cellID: string) => {
+    r.mutate.toggleCell(cellID);
   };
 
+  /*
   useEffect(() => {
     if (audioBuffers.length === 0) {
       console.log('No audio buffers loaded.');
@@ -187,6 +182,11 @@ const Grid: React.FC = () => {
       }
     }
   }, [activeCells, audioBuffers, sampleSources, globalStartTime]);
+  */
+
+  if (!cells) {
+    return null;
+  }
 
   return (
     <div>
@@ -197,18 +197,17 @@ const Grid: React.FC = () => {
         height="100"
       ></canvas>
       <div className="grid">
-        {Array.from({length: gridSize * gridSize}).map((_, index) => (
+        {cells.map(cell => (
           <div
-            key={index}
-            className={`cell ${activeCells.has(index) ? 'active' : ''} ${
-              queuedCells.has(index) ? 'queued' : ''
-            }`}
-            onClick={() => toggleCellState(index)}
+            key={cell.id}
+            // TODO: There is also 'queued' class
+            className={`cell ${cell.enabled ? 'active' : ''} ${cell.id}`}
+            onMouseDown={() => handleCellClick(cell.id)}
           />
         ))}
       </div>
     </div>
   );
-};
+}
 
 export default Grid;
