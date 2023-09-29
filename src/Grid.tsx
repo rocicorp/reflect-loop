@@ -11,67 +11,48 @@ const r = new Reflect({
 });
 
 const gridSize = 8;
-const fundamentalFrequency = 80;
-const baseTempo = 40;
+
+const calculateNextStartTime = (sampleDuration: number, audioContext: AudioContext) => {
+  if (audioContext.currentTime === 0) {
+    return audioContext.currentTime;
+  }
+  
+  const nextQuantizedTime = Math.ceil(audioContext.currentTime / sampleDuration) * sampleDuration;
+  return nextQuantizedTime;
+};
 
 const Grid: React.FC = () => {
   const [activeCells, setActiveCells] = useState<Set<number>>(new Set());
-  const [oscillators] = useState<Map<number, { oscillator: OscillatorNode, gainNode: GainNode }>>(new Map());
-  const [intervals] = useState<Map<number, number>>(new Map());
-
+  const [queuedCells, setQueuedCells] = useState<Set<number>>(new Set());
+  const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
+  const [sampleSources, setSampleSources] = useState<(AudioBufferSourceNode | null)[]>(Array(gridSize * gridSize).fill(null));
+  const [globalStartTime, setGlobalStartTime] = useState<number | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [audioContext] = useState(() => new (window.AudioContext || (window as any).webkitAudioContext)());
-  const analyserRef = useRef<AnalyserNode>(audioContext.createAnalyser());
-  analyserRef.current.fftSize = 2048;
+  
+  const audioContextRef = useRef(new (window.AudioContext || (window as any).webkitAudioContext)());
+  const analyserRef = useRef<AudioAnalyser>(audioContextRef.current.createAnalyser());
   const bufferLength = analyserRef.current.frequencyBinCount;
   const dataArray = new Uint8Array(bufferLength);
 
-  const compressor = audioContext.createDynamicsCompressor();
-  compressor.threshold.setValueAtTime(-40, audioContext.currentTime);
-  compressor.knee.setValueAtTime(5, audioContext.currentTime);
-  compressor.ratio.setValueAtTime(20, audioContext.currentTime);
-  compressor.attack.setValueAtTime(0, audioContext.currentTime);
-  compressor.release.setValueAtTime(0.25, audioContext.currentTime);
-
-  const playTone = (frequency: number) => {
-    const oscillator = audioContext.createOscillator();
-    oscillator.type = 'triangle';
-    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-
-    const gainNode = audioContext.createGain();
-    const filter = audioContext.createBiquadFilter();
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(700, audioContext.currentTime);
-
-    gainNode.connect(compressor);
-    compressor.connect(audioContext.destination);
-    oscillator.connect(filter);
-    filter.connect(gainNode);
-    gainNode.connect(analyserRef.current);
-    gainNode.connect(audioContext.destination);
-
-    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-    gainNode.gain.linearRampToValueAtTime(0.35, audioContext.currentTime + 0.2);
-    oscillator.start();
-
-    return { oscillator, gainNode };
-  };
-
-  const stopTone = (index: number) => {
-    const { oscillator, gainNode } = oscillators.get(index) || {};
-
-    if (gainNode && oscillator) {
-      gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
-      oscillator.stop(audioContext.currentTime + 0.31);
-    }
-  }
+  const audioSamples = [
+    "/samples/loop-01.wav",
+    "/samples/loop-02.wav",
+    "/samples/loop-03.wav",
+    "/samples/loop-04.wav",
+    "/samples/loop-05.wav",
+    "/samples/loop-06.wav",
+    "/samples/loop-07.wav",
+    "/samples/loop-08.wav",
+    "/samples/loop-09.wav",
+    "/samples/loop-10.wav"
+    // ... Need to add 64 total samples
+  ];
 
   const drawWaveform = () => {
-    if (!canvasRef.current || !analyserRef.current) return;
+    if (!canvasRef.current) return;
 
     const canvas = canvasRef.current;
     const canvasCtx = canvas.getContext('2d');
-    if (!canvasCtx) return;
     const width = canvas.width;
     const height = canvas.height;
 
@@ -91,17 +72,17 @@ const Grid: React.FC = () => {
     const sliceWidth = width * 1.0 / bufferLength;
     let x = 0;
 
-    for(let i = 0; i < bufferLength; i++) {
-        const v = dataArray[i] / 128.0;
-        const y = v * height / 2;
+    for (let i = 0; i < bufferLength; i++) {
+      const v = dataArray[i] / 128.0;
+      const y = v * height / 2;
 
-        if(i === 0) {
-            canvasCtx.moveTo(x, y);
-        } else {
-            canvasCtx.lineTo(x, y);
-        }
+      if (i === 0) {
+        canvasCtx.moveTo(x, y);
+      } else {
+        canvasCtx.lineTo(x, y);
+      }
 
-        x += sliceWidth;
+      x += sliceWidth;
     }
 
     canvasCtx.lineTo(canvas.width, canvas.height / 2);
@@ -110,95 +91,97 @@ const Grid: React.FC = () => {
   };
 
   useEffect(() => {
-    if (audioContext.state === "suspended") {
-      audioContext.resume();
-    }
-
-    const unsubscribes = Array.from({ length: gridSize * gridSize }).map((_, index) => {
-      return r.subscribe(
-        (tx) => tx.get(`cell-${index}`),
-        {
-          onData: (value: any) => {
-            if (typeof value === "boolean") {
-                setActiveCells(prev => {
-                    const updatedSet = new Set([...prev]);
-                    if (value) {
-                        updatedSet.add(index);
-                    } else {
-                        updatedSet.delete(index);
-                    }
-                    return updatedSet;
-                });
-            }
-          },
-          onError: (error: any) => {
-            console.error("Error with Reflect subscription:", error);
-          }
-        }
-      );
-    });
-
     drawWaveform();
-
-    return () => {
-      unsubscribes.forEach(unsubscribe => unsubscribe());
-      activeCells.forEach(cell => {
-        stopTone(cell);
-        clearInterval(intervals.get(cell)!);
-      });
-    };
   }, []);
 
+  const loadAudioSamples = async () => {
+    const buffers: AudioBuffer[] = [];
+    for (let url of audioSamples) {
+      const response = await fetch(url);
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
+      buffers.push(audioBuffer);
+    }
+    setAudioBuffers(buffers);
+  };
+
   useEffect(() => {
-    activeCells.forEach(index => {
-      if (!oscillators.has(index)) {
-        const row = Math.floor(index / gridSize);
-        const col = index % gridSize;
-        const frequency = fundamentalFrequency * (row + 1);
-        const columnTempo = baseTempo * (1 + col * 0.5);
-
-        const noteLength = 0.24;  
-        const totalDuration = (60 / columnTempo); 
-
-        const playRepeatedTone = () => {
-          stopTone(index);
-          const { oscillator, gainNode } = playTone(frequency);
-          oscillators.set(index, { oscillator, gainNode });
-
-          gainNode.gain.setValueAtTime(0.25, audioContext.currentTime); 
-          gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + noteLength); 
-          oscillator.stop(audioContext.currentTime + noteLength);  
-        };
-  
-        playRepeatedTone();
-        const intervalID = window.setInterval(playRepeatedTone, totalDuration * 1000) as unknown as number;
-        intervals.set(index, intervalID);
-      }
-    });
-
-    oscillators.forEach((_, index) => {
-      if (!activeCells.has(index)) {
-        stopTone(index);
-        clearInterval(intervals.get(index)!);
-        oscillators.delete(index);
-      }
-    });
-  }, [activeCells]);
+    loadAudioSamples();
+  }, []);
 
   const toggleCellState = (index: number) => {
-    const key = `cell-${index}`;
-    if (activeCells.has(index)) {
-      r.mutate.deactivateCell({ key });
-      setActiveCells(prev => {
-        const updatedSet = new Set([...prev]);
-        updatedSet.delete(index);
-        return updatedSet;
-      });
-    } else {
-      r.mutate.activateCell({ key });
-      setActiveCells(prev => new Set([...prev, index]));
+    setActiveCells(prev => {
+        const updated = new Set([...prev]);
+        if (updated.has(index)) {
+            updated.delete(index);
+        } else {
+            for (let i = 0; i < gridSize; i++) {
+                updated.delete(i + gridSize * Math.floor(index / gridSize));
+            }
+            updated.add(index);
+        }
+        return updated;
+    });
+
+    // If we're activating the cell, add it to queued cells.
+    if (!activeCells.has(index)) {
+        setQueuedCells(prev => {
+            const updated = new Set([...prev]);
+            updated.add(index);
+            return updated;
+        });
     }
-  };
+};
+
+useEffect(() => {
+  if (audioBuffers.length === 0) {
+      console.log("No audio buffers loaded.");
+      return;
+  }
+
+  if (!globalStartTime) {
+      console.log("Setting global start time.");
+      setGlobalStartTime(audioContextRef.current.currentTime);
+  }
+
+  for (let i = 0; i < gridSize * gridSize; i++) {
+      if (activeCells.has(i) && !sampleSources[i]) {
+          console.log(`Starting audio for cell ${i}`);
+          
+          const source = audioContextRef.current.createBufferSource();
+          source.buffer = audioBuffers[i % audioBuffers.length];
+          source.loop = true;
+          source.connect(analyserRef.current);
+          analyserRef.current.connect(audioContextRef.current.destination);
+          const nextStartTime = calculateNextStartTime(source.buffer.duration, audioContextRef.current);
+          source.start(nextStartTime);
+
+          setSampleSources(prev => {
+              const updated = [...prev];
+              updated[i] = source;
+              return updated;
+          });
+
+          setQueuedCells(prev => {
+              const updated = new Set([...prev]);
+              updated.delete(i);
+              return updated;
+          });
+      } else if (!activeCells.has(i) && sampleSources[i]) {
+          console.log(`Stopping audio for cell ${i}`);
+          
+          if (sampleSources[i]) {
+              sampleSources[i].stop();
+          }
+          setSampleSources(prev => {
+              const updated = [...prev];
+              updated[i] = null;
+              return updated;
+          });
+      }
+  }
+}, [activeCells, audioBuffers, sampleSources, globalStartTime]);
+
 
   return (
     <div>
@@ -207,7 +190,7 @@ const Grid: React.FC = () => {
         {Array.from({ length: gridSize * gridSize }).map((_, index) => (
           <div
             key={index}
-            className={`cell ${activeCells.has(index) ? 'active' : ''}`}
+            className={`cell ${activeCells.has(index) ? 'active' : ''} ${queuedCells.has(index) ? 'queued' : ''}`}
             onClick={() => toggleCellState(index)}
           />
         ))}
