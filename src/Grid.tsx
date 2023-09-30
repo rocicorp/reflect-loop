@@ -3,7 +3,7 @@ import './Grid.css';
 import {Reflect} from '@rocicorp/reflect/client';
 import {mutators} from '../reflect/mutators';
 import {useSubscribe} from 'replicache-react';
-import {listCells} from './cell';
+import {idToCoords, listCells} from './cell';
 import classnames from 'classnames';
 
 function calculateNextStartTime(
@@ -168,39 +168,53 @@ function Grid() {
       return;
     }
 
-    for (const c of cells) {
-      if (c.enabled && !sampleSources.has(c.id)) {
-        const source = audioContextRef.current.createBufferSource();
-        source.buffer = audioBuffers[parseInt(c.id) % audioBuffers.length];
-        source.loop = true;
-        source.connect(analyserRef.current);
-        analyserRef.current.connect(audioContextRef.current.destination);
-        const nextStartTime = calculateNextStartTime(
-          source.buffer.duration,
-          audioContextRef.current,
-        );
-        source.start(nextStartTime);
-        setSampleSources(prev => {
-          const updated = new Map(prev);
-          updated.set(c.id, source);
-          return updated;
-        });
-      }
+    const toDel = [...sampleSources.keys()].filter(
+      id => !cells.find(c => id == c.id)!.enabled,
+    );
+    const toAdd = cells
+      .filter(c => c.enabled && !sampleSources.has(c.id))
+      .map(c => c.id);
+
+    // If a delete has no corresponding add, then we can stop the sample immediately.
+    // Otherwise, we let it play until the next quantized time, when the corresponding add will start.
+    for (const id1 of toDel) {
+      const [, y] = idToCoords(id1);
+      const stopImmediately = !toAdd.find(id2 => {
+        const [, y2] = idToCoords(id2);
+        return y === y2;
+      });
+      const source = sampleSources.get(id1)!;
+      const nextStartTime = stopImmediately
+        ? undefined
+        : calculateNextStartTime(
+            source.buffer!.duration,
+            audioContextRef.current,
+          );
+      source.stop(nextStartTime);
+      setSampleSources(prev => {
+        const updated = new Map(prev);
+        updated.delete(id1);
+        return updated;
+      });
     }
 
-    for (const [id, source] of sampleSources.entries()) {
-      if (!cells.find(c => id == c.id)!.enabled) {
-        const nextStartTime = calculateNextStartTime(
-          source.buffer!.duration,
-          audioContextRef.current,
-        );
-        source.stop(nextStartTime);
-        setSampleSources(prev => {
-          const updated = new Map(prev);
-          updated.delete(id);
-          return updated;
-        });
-      }
+    // Adds always start at the next quantized time.
+    for (const id of toAdd) {
+      const source = audioContextRef.current.createBufferSource();
+      source.buffer = audioBuffers[parseInt(id) % audioBuffers.length];
+      source.loop = true;
+      source.connect(analyserRef.current);
+      analyserRef.current.connect(audioContextRef.current.destination);
+      const nextStartTime = calculateNextStartTime(
+        source.buffer.duration,
+        audioContextRef.current,
+      );
+      source.start(nextStartTime);
+      setSampleSources(prev => {
+        const updated = new Map(prev);
+        updated.set(id, source);
+        return updated;
+      });
     }
   }, [cells, audioBuffers, sampleSources, globalStartTime]);
 
