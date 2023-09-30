@@ -4,12 +4,12 @@ import {Reflect} from '@rocicorp/reflect/client';
 import {mutators} from '../reflect/mutators';
 import {useSubscribe} from 'replicache-react';
 import {listCells} from './cell';
+import classnames from 'classnames';
 
-/*
-const calculateNextStartTime = (
+function calculateNextStartTime(
   sampleDuration: number,
   audioContext: AudioContext,
-) => {
+) {
   if (audioContext.currentTime === 0) {
     return audioContext.currentTime;
   }
@@ -17,12 +17,11 @@ const calculateNextStartTime = (
   const nextQuantizedTime =
     Math.ceil(audioContext.currentTime / sampleDuration) * sampleDuration;
   return nextQuantizedTime;
-};
-*/
+}
 
 const r = new Reflect({
   roomID: 'r1',
-  userID: 'nanoid',
+  userID: 'anon',
   mutators,
   socketOrigin: 'ws://localhost:8080',
 });
@@ -30,13 +29,15 @@ const r = new Reflect({
 function Grid() {
   const cells = useSubscribe(r, listCells, null);
 
-  const [, setAudioBuffers] = useState<AudioBuffer[]>([]);
-  /*
-  const [queuedCells, setQueuedCells] = useState<Set<number>>(new Set());
+  const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [sampleSources, setSampleSources] = useState<
-    (AudioBufferSourceNode | null)[]
-  >(Array(gridSize * gridSize).fill(null));
+    Map<string, AudioBufferSourceNode>
+  >(new Map());
   const [globalStartTime, setGlobalStartTime] = useState<number | null>(null);
+
+  /*
+  //const queueTimerID = useRef<number | null>(null);
+  >(Array(gridSize * gridSize).fill(null));
   */
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -126,28 +127,51 @@ function Grid() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /*
+  useEffect(() => {
+    if (queuedCells.size === 0) {
+      return;
+    }
+    if (queueTimerID.current !== null) {
+      clearTimeout(queueTimerID.current);
+      queueTimerID.current = null;
+    }
+    queueTimerID.current = window.setTimeout(() => {
+      setQueuedCells(new Set());
+    }, 100);
+  });
+  */
+
   const handleCellClick = (cellID: string) => {
     r.mutate.toggleCell(cellID);
+    /*
+    setQueuedCells(prev => {
+      const updated = new Set(prev);
+      updated.add(cellID);
+      return updated;
+    });
+    */
   };
 
-  /*
   useEffect(() => {
     if (audioBuffers.length === 0) {
       console.log('No audio buffers loaded.');
       return;
     }
 
-    if (!globalStartTime) {
+    if (globalStartTime === null) {
       console.log('Setting global start time.');
       setGlobalStartTime(audioContextRef.current.currentTime);
     }
 
-    for (let i = 0; i < gridSize * gridSize; i++) {
-      if (activeCells.has(i) && !sampleSources[i]) {
-        console.log(`Starting audio for cell ${i}`);
+    if (!cells) {
+      return;
+    }
 
+    for (const c of cells) {
+      if (c.enabled && !sampleSources.has(c.id)) {
         const source = audioContextRef.current.createBufferSource();
-        source.buffer = audioBuffers[i % audioBuffers.length];
+        source.buffer = audioBuffers[parseInt(c.id) % audioBuffers.length];
         source.loop = true;
         source.connect(analyserRef.current);
         analyserRef.current.connect(audioContextRef.current.destination);
@@ -156,33 +180,29 @@ function Grid() {
           audioContextRef.current,
         );
         source.start(nextStartTime);
-
         setSampleSources(prev => {
-          const updated = [...prev];
-          updated[i] = source;
-          return updated;
-        });
-
-        setQueuedCells(prev => {
-          const updated = new Set([...prev]);
-          updated.delete(i);
-          return updated;
-        });
-      } else if (!activeCells.has(i) && sampleSources[i]) {
-        console.log(`Stopping audio for cell ${i}`);
-
-        if (sampleSources[i]) {
-          sampleSources[i]!.stop();
-        }
-        setSampleSources(prev => {
-          const updated = [...prev];
-          updated[i] = null;
+          const updated = new Map(prev);
+          updated.set(c.id, source);
           return updated;
         });
       }
     }
-  }, [activeCells, audioBuffers, sampleSources, globalStartTime]);
-  */
+
+    for (const [id, source] of sampleSources.entries()) {
+      if (!cells.find(c => id == c.id)!.enabled) {
+        const nextStartTime = calculateNextStartTime(
+          source.buffer!.duration,
+          audioContextRef.current,
+        );
+        source.stop(nextStartTime);
+        setSampleSources(prev => {
+          const updated = new Map(prev);
+          updated.delete(id);
+          return updated;
+        });
+      }
+    }
+  }, [cells, audioBuffers, sampleSources, globalStartTime]);
 
   if (!cells) {
     return null;
@@ -200,8 +220,10 @@ function Grid() {
         {cells.map(cell => (
           <div
             key={cell.id}
-            // TODO: There is also 'queued' class
-            className={`cell ${cell.enabled ? 'active' : ''} ${cell.id}`}
+            className={classnames('cell', cell.id, {
+              active: cell.enabled,
+              //queued: queuedCells.has(cell.id),
+            })}
             onMouseDown={() => handleCellClick(cell.id)}
           />
         ))}

@@ -34,7 +34,7 @@
 }
 
 .cell.queued {
-  animation: pulse 2s infinite;
+  animation: pulse 1.5s infinite;
 }
 
 .cell.active {
@@ -55,7 +55,7 @@
   }
   50% {
     background-color: #fc208a;
-    opacity: 1;
+    opacity: 0.75;
   }
   100% {
     background-color: #fc208a;
