@@ -107,7 +107,7 @@ function Grid() {
   useEffect(() => {
     drawWaveform();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [canvasRef.current]);
 
   const loadAudioSamples = async () => {
     const buffers: AudioBuffer[] = [];
