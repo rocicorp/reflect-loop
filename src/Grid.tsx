@@ -23,7 +23,7 @@ const r = new Reflect({
   roomID: "r1",
   userID: "anon",
   mutators,
-  socketOrigin: "ws://localhost:8080",
+  server: import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/",
 });
 
 enum SourceState {
