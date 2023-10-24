@@ -100,70 +100,70 @@ function Grid() {
   const dataArray = new Uint8Array(bufferLength);
 
   const audioSamples = [
-    '/samples/row-1-sample-1.mp3',
-    '/samples/row-1-sample-2.mp3',
-    '/samples/row-1-sample-3.mp3',
-    '/samples/row-1-sample-4.mp3',
-    '/samples/row-1-sample-5.mp3',
-    '/samples/row-1-sample-6.mp3',
-    '/samples/row-1-sample-7.mp3',
-    '/samples/row-1-sample-8.mp3',
-    '/samples/row-2-sample-1.mp3',
-    '/samples/row-2-sample-2.mp3',
-    '/samples/row-2-sample-3.mp3',
-    '/samples/row-2-sample-4.mp3',
-    '/samples/row-2-sample-5.mp3',
-    '/samples/row-2-sample-6.mp3',
-    '/samples/row-2-sample-7.mp3',
-    '/samples/row-2-sample-8.mp3',
-    '/samples/row-3-sample-1.mp3',
-    '/samples/row-3-sample-2.mp3',
-    '/samples/row-3-sample-3.mp3',
-    '/samples/row-3-sample-4.mp3',
-    '/samples/row-3-sample-5.mp3',
-    '/samples/row-3-sample-6.mp3',
-    '/samples/row-3-sample-7.mp3',
-    '/samples/row-3-sample-8.mp3',
-    '/samples/row-4-sample-1.mp3',
-    '/samples/row-4-sample-2.mp3',
-    '/samples/row-4-sample-3.mp3',
-    '/samples/row-4-sample-4.mp3',
-    '/samples/row-4-sample-5.mp3',
-    '/samples/row-4-sample-6.mp3',
-    '/samples/row-4-sample-7.mp3',
-    '/samples/row-4-sample-8.mp3',
-    '/samples/row-5-sample-1.mp3',
-    '/samples/row-5-sample-2.mp3',
-    '/samples/row-5-sample-3.mp3',
-    '/samples/row-5-sample-4.mp3',
-    '/samples/row-5-sample-5.mp3',
-    '/samples/row-5-sample-6.mp3',
-    '/samples/row-5-sample-7.mp3',
-    '/samples/row-5-sample-8.mp3',
-    '/samples/row-6-sample-1.mp3',
-    '/samples/row-6-sample-2.mp3',
-    '/samples/row-6-sample-3.mp3',
-    '/samples/row-6-sample-4.mp3',
-    '/samples/row-6-sample-5.mp3',
-    '/samples/row-6-sample-6.mp3',
-    '/samples/row-6-sample-7.mp3',
-    '/samples/row-6-sample-8.mp3',
-    '/samples/row-7-sample-1.mp3',
-    '/samples/row-7-sample-2.mp3',
-    '/samples/row-7-sample-3.mp3',
-    '/samples/row-7-sample-4.mp3',
-    '/samples/row-7-sample-5.mp3',
-    '/samples/row-7-sample-6.mp3',
-    '/samples/row-7-sample-7.mp3',
-    '/samples/row-7-sample-8.mp3',
-    '/samples/row-8-sample-1.mp3',
-    '/samples/row-8-sample-2.mp3',
-    '/samples/row-8-sample-3.mp3',
-    '/samples/row-8-sample-4.mp3',
-    '/samples/row-8-sample-5.mp3',
-    '/samples/row-8-sample-6.mp3',
-    '/samples/row-8-sample-7.mp3',
-    '/samples/row-8-sample-8.mp3'
+    "/samples/row-1-sample-1.mp3",
+    "/samples/row-1-sample-2.mp3",
+    "/samples/row-1-sample-3.mp3",
+    "/samples/row-1-sample-4.mp3",
+    "/samples/row-1-sample-5.mp3",
+    "/samples/row-1-sample-6.mp3",
+    "/samples/row-1-sample-7.mp3",
+    "/samples/row-1-sample-8.mp3",
+    "/samples/row-2-sample-1.mp3",
+    "/samples/row-2-sample-2.mp3",
+    "/samples/row-2-sample-3.mp3",
+    "/samples/row-2-sample-4.mp3",
+    "/samples/row-2-sample-5.mp3",
+    "/samples/row-2-sample-6.mp3",
+    "/samples/row-2-sample-7.mp3",
+    "/samples/row-2-sample-8.mp3",
+    "/samples/row-3-sample-1.mp3",
+    "/samples/row-3-sample-2.mp3",
+    "/samples/row-3-sample-3.mp3",
+    "/samples/row-3-sample-4.mp3",
+    "/samples/row-3-sample-5.mp3",
+    "/samples/row-3-sample-6.mp3",
+    "/samples/row-3-sample-7.mp3",
+    "/samples/row-3-sample-8.mp3",
+    "/samples/row-4-sample-1.mp3",
+    "/samples/row-4-sample-2.mp3",
+    "/samples/row-4-sample-3.mp3",
+    "/samples/row-4-sample-4.mp3",
+    "/samples/row-4-sample-5.mp3",
+    "/samples/row-4-sample-6.mp3",
+    "/samples/row-4-sample-7.mp3",
+    "/samples/row-4-sample-8.mp3",
+    "/samples/row-5-sample-1.mp3",
+    "/samples/row-5-sample-2.mp3",
+    "/samples/row-5-sample-3.mp3",
+    "/samples/row-5-sample-4.mp3",
+    "/samples/row-5-sample-5.mp3",
+    "/samples/row-5-sample-6.mp3",
+    "/samples/row-5-sample-7.mp3",
+    "/samples/row-5-sample-8.mp3",
+    "/samples/row-6-sample-1.mp3",
+    "/samples/row-6-sample-2.mp3",
+    "/samples/row-6-sample-3.mp3",
+    "/samples/row-6-sample-4.mp3",
+    "/samples/row-6-sample-5.mp3",
+    "/samples/row-6-sample-6.mp3",
+    "/samples/row-6-sample-7.mp3",
+    "/samples/row-6-sample-8.mp3",
+    "/samples/row-7-sample-1.mp3",
+    "/samples/row-7-sample-2.mp3",
+    "/samples/row-7-sample-3.mp3",
+    "/samples/row-7-sample-4.mp3",
+    "/samples/row-7-sample-5.mp3",
+    "/samples/row-7-sample-6.mp3",
+    "/samples/row-7-sample-7.mp3",
+    "/samples/row-7-sample-8.mp3",
+    "/samples/row-8-sample-1.mp3",
+    "/samples/row-8-sample-2.mp3",
+    "/samples/row-8-sample-3.mp3",
+    "/samples/row-8-sample-4.mp3",
+    "/samples/row-8-sample-5.mp3",
+    "/samples/row-8-sample-6.mp3",
+    "/samples/row-8-sample-7.mp3",
+    "/samples/row-8-sample-8.mp3",
   ];
 
   // This enable audio on click.
@@ -222,15 +222,13 @@ function Grid() {
   }, [canvasRef.current]);
 
   const loadAudioSamples = async () => {
-    const buffers: AudioBuffer[] = [];
-    for (const url of audioSamples) {
-      const response = await fetch(url);
-      const arrayBuffer = await response.arrayBuffer();
-      const audioBuffer = await audioContextRef.current.decodeAudioData(
-        arrayBuffer
-      );
-      buffers.push(audioBuffer);
-    }
+    const buffers = await Promise.all(
+      audioSamples.map(async (url) => {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        return audioContextRef.current.decodeAudioData(arrayBuffer);
+      })
+    );
     setAudioBuffers(buffers);
   };
 
