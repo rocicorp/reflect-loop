@@ -88,7 +88,31 @@ function Grid() {
     '/samples/row-5-sample-5.wav',
     '/samples/row-5-sample-6.wav',
     '/samples/row-5-sample-7.wav',
-    '/samples/row-5-sample-8.wav'
+    '/samples/row-5-sample-8.wav',
+    '/samples/row-6-sample-1.wav',
+    '/samples/row-6-sample-2.wav',
+    '/samples/row-6-sample-3.wav',
+    '/samples/row-6-sample-4.wav',
+    '/samples/row-6-sample-5.wav',
+    '/samples/row-6-sample-6.wav',
+    '/samples/row-6-sample-7.wav',
+    '/samples/row-6-sample-8.wav',
+    '/samples/row-7-sample-1.wav',
+    '/samples/row-7-sample-2.wav',
+    '/samples/row-7-sample-3.wav',
+    '/samples/row-7-sample-4.wav',
+    '/samples/row-7-sample-5.wav',
+    '/samples/row-7-sample-6.wav',
+    '/samples/row-7-sample-7.wav',
+    '/samples/row-7-sample-8.wav',
+    '/samples/row-8-sample-1.wav',
+    '/samples/row-8-sample-2.wav',
+    '/samples/row-8-sample-3.wav',
+    '/samples/row-8-sample-4.wav',
+    '/samples/row-8-sample-5.wav',
+    '/samples/row-8-sample-6.wav',
+    '/samples/row-8-sample-7.wav',
+    '/samples/row-8-sample-8.wav'
 
   ];
 
