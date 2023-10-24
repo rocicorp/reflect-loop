@@ -1,14 +1,14 @@
-import {useEffect, useRef, useState} from 'react';
-import './Grid.css';
-import {Reflect} from '@rocicorp/reflect/client';
-import {mutators} from '../reflect/mutators';
-import {useSubscribe} from 'replicache-react';
-import {idToCoords, listCells} from './cell';
-import classnames from 'classnames';
+import { useEffect, useReducer, useRef, useState } from "react";
+import "./Grid.css";
+import { Reflect } from "@rocicorp/reflect/client";
+import { mutators } from "../reflect/mutators";
+import { coordsToID, gridSize, indexToID, listCells, numCells } from "./cell";
+import classnames from "classnames";
+import { useSubscribe } from "replicache-react";
 
 function calculateNextStartTime(
   sampleDuration: number,
-  audioContext: AudioContext,
+  audioContext: AudioContext
 ) {
   if (audioContext.currentTime === 0) {
     return audioContext.currentTime;
@@ -20,31 +20,82 @@ function calculateNextStartTime(
 }
 
 const r = new Reflect({
-  roomID: 'r1',
-  userID: 'anon',
+  roomID: "r1",
+  userID: "anon",
   mutators,
-  socketOrigin: 'ws://localhost:8080',
+  server: import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/",
 });
 
+enum SourceState {
+  Unqueued = -1,
+  Queued = 0,
+  Playing = 1,
+  Stopping = 2,
+  Stopped = 3,
+}
+
+class SourceNode extends AudioBufferSourceNode {
+  #timerID: number | null = null;
+  #state: SourceState;
+
+  constructor(context: AudioContext, buffer: AudioBuffer) {
+    super(context, { buffer });
+    this.#state = SourceState.Unqueued;
+  }
+
+  get state() {
+    return this.#state;
+  }
+
+  start(when?: number) {
+    if (this.#state !== SourceState.Unqueued) {
+      throw new Error("Cannot start already started node");
+    }
+
+    this.#state = SourceState.Queued;
+    super.start(when);
+
+    const delta = when ? when - this.context.currentTime : 0;
+    this.#timerID = window.setTimeout(() => {
+      this.#state = SourceState.Playing;
+      this.dispatchEvent(new Event("started"));
+    }, delta * 1000);
+  }
+
+  stop(when?: number) {
+    if (
+      this.#state !== SourceState.Queued &&
+      this.#state !== SourceState.Playing
+    ) {
+      throw new Error("Cannot stop unqueued or stopped node");
+    }
+
+    if (this.#timerID !== null) {
+      window.clearTimeout(this.#timerID);
+      this.#timerID = null;
+    }
+
+    this.#state = SourceState.Stopping;
+    super.stop(when);
+    const delta = when ? when - this.context.currentTime : 0;
+    this.#timerID = window.setTimeout(() => {
+      this.#state = SourceState.Stopped;
+      this.dispatchEvent(new Event("stopped"));
+    }, delta * 1000);
+  }
+}
+
 function Grid() {
-  const cells = useSubscribe(r, listCells, null);
-
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
-  const [sampleSources, setSampleSources] = useState<
-    Map<string, AudioBufferSourceNode>
-  >(new Map());
-  const [globalStartTime, setGlobalStartTime] = useState<number | null>(null);
+  const [, onSourceNodeChange] = useReducer((x) => x + 1, 0);
 
-  /*
-  //const queueTimerID = useRef<number | null>(null);
-  >(Array(gridSize * gridSize).fill(null));
-  */
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const audioContextRef = useRef(new window.AudioContext());
   const analyserRef = useRef<AnalyserNode>(
-    audioContextRef.current.createAnalyser(),
+    audioContextRef.current.createAnalyser()
   );
+
   const bufferLength = analyserRef.current.frequencyBinCount;
   const dataArray = new Uint8Array(bufferLength);
 
@@ -113,25 +164,32 @@ function Grid() {
     '/samples/row-8-sample-6.wav',
     '/samples/row-8-sample-7.wav',
     '/samples/row-8-sample-8.wav'
-
   ];
+
+  // This enable audio on click.
+  // TODO: Add a play button overload so users know they need to click
+  useEffect(() => {
+    const handler = () => audioContextRef.current?.resume();
+    window.addEventListener("click", handler, false);
+    return () => window.removeEventListener("click", handler, false);
+  }, []);
 
   const drawWaveform = () => {
     if (!canvasRef.current) return;
 
     const canvas = canvasRef.current;
-    const canvasCtx = canvas.getContext('2d')!;
+    const canvasCtx = canvas.getContext("2d")!;
     const width = canvas.width;
     const height = canvas.height;
 
     const gradient = canvasCtx.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, 'red');
-    gradient.addColorStop(0.5, 'yellow');
-    gradient.addColorStop(1, 'green');
+    gradient.addColorStop(0, "red");
+    gradient.addColorStop(0.5, "yellow");
+    gradient.addColorStop(1, "green");
 
     analyserRef.current.getByteTimeDomainData(dataArray);
 
-    canvasCtx.fillStyle = 'rgb(0, 0, 0)';
+    canvasCtx.fillStyle = "rgb(0, 0, 0)";
     canvasCtx.fillRect(0, 0, width, height);
     canvasCtx.lineWidth = 2;
     canvasCtx.strokeStyle = gradient;
@@ -169,7 +227,7 @@ function Grid() {
       const response = await fetch(url);
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioContextRef.current.decodeAudioData(
-        arrayBuffer,
+        arrayBuffer
       );
       buffers.push(audioBuffer);
     }
@@ -181,100 +239,83 @@ function Grid() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /*
-  useEffect(() => {
-    if (queuedCells.size === 0) {
-      return;
-    }
-    if (queueTimerID.current !== null) {
-      clearTimeout(queueTimerID.current);
-      queueTimerID.current = null;
-    }
-    queueTimerID.current = window.setTimeout(() => {
-      setQueuedCells(new Set());
-    }, 100);
-  });
-  */
+  const enabledCells = useSubscribe(
+    r,
+    async (tx) => {
+      const cells = await listCells(tx);
+      return Object.fromEntries(cells.map((c) => [c.id, c] as const));
+    },
+    {}
+  );
 
   const handleCellClick = (cellID: string) => {
-    r.mutate.toggleCell(cellID);
-    /*
-    setQueuedCells(prev => {
-      const updated = new Set(prev);
-      updated.add(cellID);
-      return updated;
+    r.mutate.setCellEnabled({
+      id: cellID,
+      enabled: !(cellID in enabledCells),
     });
-    */
   };
 
+  const sources = useRef<Record<string, SourceNode>>({});
+
   useEffect(() => {
-    if (audioBuffers.length === 0) {
-      console.log('No audio buffers loaded.');
+    if (!audioBuffers.length) {
       return;
     }
 
-    if (globalStartTime === null) {
-      console.log('Setting global start time.');
-      setGlobalStartTime(audioContextRef.current.currentTime);
-    }
-
-    if (!cells) {
-      return;
-    }
-
-    const toDel = [...sampleSources.keys()].filter(
-      id => !cells.find(c => id == c.id)!.enabled,
+    const nextStartTime = calculateNextStartTime(
+      audioBuffers[0].duration,
+      audioContextRef.current
     );
-    const toAdd = cells
-      .filter(c => c.enabled && !sampleSources.has(c.id))
-      .map(c => c.id);
 
-    // If a delete has no corresponding add, then we can stop the sample immediately.
-    // Otherwise, we let it play until the next quantized time, when the corresponding add will start.
-    for (const id1 of toDel) {
-      const [, y] = idToCoords(id1);
-      const stopImmediately = !toAdd.find(id2 => {
-        const [, y2] = idToCoords(id2);
-        return y === y2;
-      });
-      const source = sampleSources.get(id1)!;
-      const nextStartTime = stopImmediately
-        ? undefined
-        : calculateNextStartTime(
-            source.buffer!.duration,
+    // loop through each row
+    // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
+    // else if there is a delete just stop it
+
+    for (let y = 0; y < gridSize; y++) {
+      const adds: string[] = [];
+      const dels: string[] = [];
+      for (let x = 0; x < gridSize; x++) {
+        const id = coordsToID(x, y);
+        const source = sources.current[id];
+        const active = source && source.state <= SourceState.Playing;
+        const added = id in enabledCells && !active;
+        const deleted = active && !(id in enabledCells);
+        if (added) {
+          adds.push(id);
+        }
+        if (deleted) {
+          dels.push(id);
+        }
+      }
+      if (adds.length > 0) {
+        for (const id of adds) {
+          const source = new SourceNode(
             audioContextRef.current,
+            audioBuffers[parseInt(id) % audioBuffers.length]
           );
-      source.stop(nextStartTime);
-      setSampleSources(prev => {
-        const updated = new Map(prev);
-        updated.delete(id1);
-        return updated;
-      });
+          source.loop = true;
+          source.connect(analyserRef.current);
+          analyserRef.current.connect(audioContextRef.current.destination);
+          source.addEventListener("started", onSourceNodeChange);
+          source.addEventListener("stopped", onSourceNodeChange);
+          source.start(nextStartTime);
+          sources.current[id] = source;
+        }
+        for (const id of dels) {
+          const node = sources.current[id];
+          node.stop(nextStartTime);
+        }
+      } else {
+        for (const id of dels) {
+          const source = sources.current[id];
+          source.stop();
+        }
+      }
+      if (adds.length > 0 || dels.length > 0) {
+        onSourceNodeChange();
+      }
     }
-
-    // Adds always start at the next quantized time.
-    for (const id of toAdd) {
-      const source = audioContextRef.current.createBufferSource();
-      source.buffer = audioBuffers[parseInt(id) % audioBuffers.length];
-      source.loop = true;
-      source.connect(analyserRef.current);
-      analyserRef.current.connect(audioContextRef.current.destination);
-      const nextStartTime = calculateNextStartTime(
-        source.buffer.duration,
-        audioContextRef.current,
-      );
-      source.start(nextStartTime);
-      setSampleSources(prev => {
-        const updated = new Map(prev);
-        updated.set(id, source);
-        return updated;
-      });
-    }
-  }, [cells, audioBuffers, sampleSources, globalStartTime]);
-
-  if (!cells) {
-    return null;
-  }
+  }, [audioBuffers, enabledCells, sources]);
 
   return (
     <div>
@@ -285,16 +326,22 @@ function Grid() {
         height="100"
       ></canvas>
       <div className="grid">
-        {cells.map(cell => (
-          <div
-            key={cell.id}
-            className={classnames('cell', cell.id, {
-              active: cell.enabled,
-              //queued: queuedCells.has(cell.id),
-            })}
-            onMouseDown={() => handleCellClick(cell.id)}
-          />
-        ))}
+        {new Array(numCells).fill(null).map((_, i) => {
+          const id = indexToID(i);
+          const source = sources.current[id];
+          const active = source && source.state <= SourceState.Stopping;
+          const queued = source && source.state === SourceState.Queued;
+          return (
+            <div
+              key={id}
+              className={classnames("cell", id, {
+                active,
+                queued,
+              })}
+              onMouseDown={() => handleCellClick(id)}
+            />
+          );
+        })}
       </div>
     </div>
   );

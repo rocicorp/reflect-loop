@@ -1,5 +1,5 @@
 {
-  "name": "grid-synth-demo",
+  "name": "play",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@rocicorp/rails": "^0.7.1",
-    "@rocicorp/reflect": "^0.35.0",
+    "@rocicorp/reflect": "^0.36.202310172246",
     "classnames": "^2.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -1,0 +1,9 @@
+x sync just "active" state which are the selections only
+x handle adds from sync state by creating source nodes with what state they are in
+x set local nodes to play at correct time and force ui update
+x then handle deletes from sync state
+
+- i wonder if all the queued cells should pulse at same rate
+- add play button overlay
+- add cursors
+- the logic for startTime isn't correct. when there are no playing buffers, we should start immediately, otherwise start relative to that. Right now we only do that for the first time a cell is added on page load.

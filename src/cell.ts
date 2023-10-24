@@ -1,22 +1,23 @@
-import {generate} from '@rocicorp/rails';
+import { generate } from "@rocicorp/rails";
 
 export const gridSize = 8;
 export const numCells = gridSize * gridSize;
 
 export type Cell = {
   id: string;
-  enabled: boolean;
 };
 
 export const {
   init: initCell,
   listIDs: listCellIDs,
   list: listCells,
+  has: hasCell,
   get: getCell,
+  delete: deleteCell,
   mustGet: mustGetCell,
   put: putCell,
   update: updateCell,
-} = generate<Cell>('cell');
+} = generate<Cell>("cell");
 
 export function idToCoords(id: string): [number, number] {
   const i = parseInt(id);
@@ -24,5 +25,9 @@ export function idToCoords(id: string): [number, number] {
 }
 
 export function coordsToID(x: number, y: number): string {
-  return String(x + y * gridSize).padStart(2, '0');
+  return indexToID(x + y * gridSize);
+}
+
+export function indexToID(i: number): string {
+  return String(i).padStart(2, "0");
 }
