@@ -88,7 +88,7 @@ class SourceNode extends AudioBufferSourceNode {
 function Grid() {
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [, onSourceNodeChange] = useReducer((x) => x + 1, 0);
-
+  const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const audioContextRef = useRef(new window.AudioContext());
@@ -230,7 +230,7 @@ function Grid() {
   useEffect(() => {
     drawWaveform();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef.current]);
+  }, [canvasRef.current, redrawTrigger]);
 
   const loadAudioSamples = async () => {
     const buffers = await Promise.all(
@@ -241,6 +241,8 @@ function Grid() {
       })
     );
     setAudioBuffers(buffers);
+
+    setRedrawTrigger(prev => prev + 1);
   };
 
   useEffect(() => {
