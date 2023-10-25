@@ -1,8 +1,8 @@
 // src/App.tsx
 
-import React from 'react';
-import './App.css';
-import Grid from './Grid';
+import React from "react";
+import "./App.css";
+import Grid from "./Grid";
 
 const App: React.FC = () => {
   return (

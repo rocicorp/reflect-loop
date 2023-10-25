@@ -8,7 +8,7 @@ import { useSubscribe } from "replicache-react";
 
 function calculateNextStartTime(
   sampleDuration: number,
-  audioContext: AudioContext
+  audioContext: AudioContext,
 ) {
   if (audioContext.currentTime === 0) {
     return audioContext.currentTime;
@@ -88,12 +88,12 @@ class SourceNode extends AudioBufferSourceNode {
 function Grid() {
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [, onSourceNodeChange] = useReducer((x) => x + 1, 0);
-
+  const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const audioContextRef = useRef(new window.AudioContext());
   const analyserRef = useRef<AnalyserNode>(
-    audioContextRef.current.createAnalyser()
+    audioContextRef.current.createAnalyser(),
   );
 
   const bufferLength = analyserRef.current.frequencyBinCount;
@@ -213,13 +213,24 @@ function Grid() {
 
     canvasCtx.lineTo(canvas.width, canvas.height / 2);
     canvasCtx.stroke();
+
+    // Loop progress bar
+    if (audioBuffers.length > 0 && audioBuffers[0].duration) {
+      const progress =
+        (audioContextRef.current.currentTime % audioBuffers[0].duration) /
+        audioBuffers[0].duration;
+      const progressBarWidth = progress * width;
+      canvasCtx.fillStyle = "rgba(95, 232, 255, 0.3)";
+      canvasCtx.fillRect(0, 0, progressBarWidth, height);
+    }
+
     requestAnimationFrame(drawWaveform);
   };
 
   useEffect(() => {
     drawWaveform();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef.current]);
+  }, [canvasRef.current, redrawTrigger]);
 
   const loadAudioSamples = async () => {
     const buffers = await Promise.all(
@@ -227,9 +238,11 @@ function Grid() {
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
         return audioContextRef.current.decodeAudioData(arrayBuffer);
-      })
+      }),
     );
     setAudioBuffers(buffers);
+
+    setRedrawTrigger((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -243,7 +256,7 @@ function Grid() {
       const cells = await listCells(tx);
       return Object.fromEntries(cells.map((c) => [c.id, c] as const));
     },
-    {}
+    {},
   );
 
   const handleCellClick = (cellID: string) => {
@@ -262,7 +275,7 @@ function Grid() {
 
     const nextStartTime = calculateNextStartTime(
       audioBuffers[0].duration,
-      audioContextRef.current
+      audioContextRef.current,
     );
 
     // loop through each row
@@ -289,7 +302,7 @@ function Grid() {
         for (const id of adds) {
           const source = new SourceNode(
             audioContextRef.current,
-            audioBuffers[parseInt(id) % audioBuffers.length]
+            audioBuffers[parseInt(id) % audioBuffers.length],
           );
           source.loop = true;
           source.connect(analyserRef.current);
@@ -321,7 +334,7 @@ function Grid() {
         ref={canvasRef}
         className="waveform"
         width="444"
-        height="100"
+        height="64"
       ></canvas>
       <div className="grid">
         {new Array(numCells).fill(null).map((_, i) => {
