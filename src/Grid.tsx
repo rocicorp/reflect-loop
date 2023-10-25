@@ -220,7 +220,7 @@ function Grid() {
     if (audioBuffers.length > 0 && audioBuffers[0].duration) {
       const progress = (audioContextRef.current.currentTime % audioBuffers[0].duration) / audioBuffers[0].duration;
       const progressBarWidth = progress * width;
-      canvasCtx.fillStyle = "rgba(95, 232, 255, 0.5)";
+      canvasCtx.fillStyle = "rgba(95, 232, 255, 0.3)";
       canvasCtx.fillRect(0, 0, progressBarWidth, height);
     }
 
@@ -228,9 +228,7 @@ function Grid() {
   };
 
   useEffect(() => {
-    if (canvasRef.current) {
-      drawWaveform();
-    }
+    drawWaveform();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasRef.current]);
 
@@ -334,7 +332,7 @@ function Grid() {
         ref={canvasRef}
         className="waveform"
         width="444"
-        height="100"
+        height="64"
       ></canvas>
       <div className="grid">
         {new Array(numCells).fill(null).map((_, i) => {
