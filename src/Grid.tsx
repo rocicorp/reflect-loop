@@ -213,11 +213,24 @@ function Grid() {
 
     canvasCtx.lineTo(canvas.width, canvas.height / 2);
     canvasCtx.stroke();
+
+    
+
+    // Loop progress bar
+    if (audioBuffers.length > 0 && audioBuffers[0].duration) {
+      const progress = (audioContextRef.current.currentTime % audioBuffers[0].duration) / audioBuffers[0].duration;
+      const progressBarWidth = progress * width;
+      canvasCtx.fillStyle = "rgba(95, 232, 255, 0.5)";
+      canvasCtx.fillRect(0, 0, progressBarWidth, height);
+    }
+
     requestAnimationFrame(drawWaveform);
   };
 
   useEffect(() => {
-    drawWaveform();
+    if (canvasRef.current) {
+      drawWaveform();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasRef.current]);
 
