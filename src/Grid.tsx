@@ -220,7 +220,7 @@ function Grid() {
         (audioContextRef.current.currentTime % audioBuffers[0].duration) /
         audioBuffers[0].duration;
       const progressBarWidth = progress * width;
-      canvasCtx.fillStyle = "rgba(95, 232, 255, 0.3)";
+      canvasCtx.fillStyle = "rgba(255, 255, 255, 0.1)";
       canvasCtx.fillRect(0, 0, progressBarWidth, height);
     }
 
