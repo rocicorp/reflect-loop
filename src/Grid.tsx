@@ -90,7 +90,7 @@ function Grid() {
   const [, onSourceNodeChange] = useReducer((x) => x + 1, 0);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
+  const [audioInitialized, setAudioInitialized] = useState(false);
   const audioContextRef = useRef(new window.AudioContext());
   const analyserRef = useRef<AnalyserNode>(
     audioContextRef.current.createAnalyser(),
@@ -169,7 +169,13 @@ function Grid() {
   // This enable audio on click.
   // TODO: Add a play button overload so users know they need to click
   useEffect(() => {
-    const handler = () => audioContextRef.current?.resume();
+    const handler = () => {
+      audioContextRef.current?.resume().then(() => {
+        if (audioContextRef.current?.state === "running") {
+          setAudioInitialized(true);
+        }
+      });
+    };
     window.addEventListener("click", handler, false);
     return () => window.removeEventListener("click", handler, false);
   }, []);
@@ -330,6 +336,9 @@ function Grid() {
 
   return (
     <div>
+      <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
+        Click or tap anywhere to start audio 🔊
+      </p>
       <canvas
         ref={canvasRef}
         className="waveform"
