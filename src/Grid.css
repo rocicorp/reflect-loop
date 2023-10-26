@@ -7,8 +7,7 @@
 }
 
 .cell {
-  width: 48px;
-  height: 48px;
+  aspect-ratio: 1/1;
   background-color: rgba(255, 255, 255, 0.3);
   border: 3px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
@@ -61,5 +60,15 @@
   100% {
     background-color: #fc208a;
     opacity: 0.5;
+  }
+}
+
+/* Responsive 📱 */
+
+/* For mobile devices with width up to 600px */
+@media (max-width: 600px) {
+
+  .waveform {
+    width: 100%;
   }
 }
