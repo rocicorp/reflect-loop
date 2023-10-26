@@ -1,5 +1,15 @@
 /* src/Grid.css */
 
+.audioStartMessage {
+  margin-bottom: 2rem;
+  cursor: default;
+}
+
+.hidden {
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(8, 1fr);
