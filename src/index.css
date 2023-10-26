@@ -41,6 +41,10 @@ h1 {
   color: var(--text-primary);
 }
 
+.loopLogo {
+  margin-bottom: 3rem;
+}
+
 button {
   border-radius: 8px;
   border: 1px solid transparent;
