@@ -63,3 +63,37 @@
     opacity: 0.5;
   }
 }
+
+/* Responsive 📱 */
+
+/* For mobile devices with width up to 600px */
+@media (max-width: 600px) {
+  .grid {
+    gap: 4px;
+  }
+
+  .cell {
+    width: 32px;
+    height: 32px;
+  }
+
+  .waveform {
+    margin: 10px auto;
+  }
+}
+
+/* For tablet devices with width between 601px to 1024px */
+@media (min-width: 601px) and (max-width: 1024px) {
+  .grid {
+    gap: 6px;
+  }
+
+  .cell {
+    width: 40px;
+    height: 40px;
+  }
+
+  .waveform {
+    margin: 15px auto;
+  }
+}
