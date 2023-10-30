@@ -6,19 +6,6 @@ import { coordsToID, gridSize, indexToID, listCells, numCells } from "./cell";
 import classnames from "classnames";
 import { useSubscribe } from "replicache-react";
 
-function calculateNextStartTime(
-  sampleDuration: number,
-  audioContext: AudioContext
-) {
-  if (audioContext.currentTime === 0) {
-    return audioContext.currentTime;
-  }
-
-  const nextQuantizedTime =
-    Math.ceil(audioContext.currentTime / sampleDuration) * sampleDuration;
-  return nextQuantizedTime;
-}
-
 const r = new Reflect({
   roomID: "r1",
   userID: "anon",
