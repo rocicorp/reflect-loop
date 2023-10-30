@@ -8,7 +8,7 @@ import { useSubscribe } from "replicache-react";
 
 function calculateNextStartTime(
   sampleDuration: number,
-  audioContext: AudioContext,
+  audioContext: AudioContext
 ) {
   if (audioContext.currentTime === 0) {
     return audioContext.currentTime;
@@ -47,13 +47,13 @@ class SourceNode extends AudioBufferSourceNode {
     return this.#state;
   }
 
-  start(when?: number) {
+  start(when?: number, offset?: number) {
     if (this.#state !== SourceState.Unqueued) {
       throw new Error("Cannot start already started node");
     }
 
     this.#state = SourceState.Queued;
-    super.start(when);
+    super.start(when, offset);
 
     const delta = when ? when - this.context.currentTime : 0;
     this.#timerID = window.setTimeout(() => {
@@ -93,7 +93,7 @@ function Grid() {
   const [audioInitialized, setAudioInitialized] = useState(false);
   const audioContextRef = useRef(new window.AudioContext());
   const analyserRef = useRef<AnalyserNode>(
-    audioContextRef.current.createAnalyser(),
+    audioContextRef.current.createAnalyser()
   );
 
   const bufferLength = analyserRef.current.frequencyBinCount;
@@ -244,7 +244,7 @@ function Grid() {
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
         return audioContextRef.current.decodeAudioData(arrayBuffer);
-      }),
+      })
     );
     setAudioBuffers(buffers);
 
@@ -262,7 +262,7 @@ function Grid() {
       const cells = await listCells(tx);
       return Object.fromEntries(cells.map((c) => [c.id, c] as const));
     },
-    {},
+    {}
   );
 
   const handleCellClick = (cellID: string) => {
@@ -278,11 +278,6 @@ function Grid() {
     if (!audioBuffers.length) {
       return;
     }
-
-    const nextStartTime = calculateNextStartTime(
-      audioBuffers[0].duration,
-      audioContextRef.current,
-    );
 
     // loop through each row
     // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
@@ -304,30 +299,27 @@ function Grid() {
           dels.push(id);
         }
       }
-      if (adds.length > 0) {
-        for (const id of adds) {
-          const source = new SourceNode(
-            audioContextRef.current,
-            audioBuffers[parseInt(id) % audioBuffers.length],
-          );
-          source.loop = true;
-          source.connect(analyserRef.current);
-          analyserRef.current.connect(audioContextRef.current.destination);
-          source.addEventListener("started", onSourceNodeChange);
-          source.addEventListener("stopped", onSourceNodeChange);
-          source.start(nextStartTime);
-          sources.current[id] = source;
-        }
-        for (const id of dels) {
-          const node = sources.current[id];
-          node.stop(nextStartTime);
-        }
-      } else {
-        for (const id of dels) {
-          const source = sources.current[id];
-          source.stop();
-        }
+      for (const id of adds) {
+        const source = new SourceNode(
+          audioContextRef.current,
+          audioBuffers[parseInt(id) % audioBuffers.length]
+        );
+        source.loop = true;
+        source.connect(analyserRef.current);
+        analyserRef.current.connect(audioContextRef.current.destination);
+        source.addEventListener("started", onSourceNodeChange);
+        source.addEventListener("stopped", onSourceNodeChange);
+        source.start(
+          0,
+          audioContextRef.current.currentTime % audioBuffers[0].duration
+        );
+        sources.current[id] = source;
       }
+      for (const id of dels) {
+        const node = sources.current[id];
+        node.stop();
+      }
+
       if (adds.length > 0 || dels.length > 0) {
         onSourceNodeChange();
       }
