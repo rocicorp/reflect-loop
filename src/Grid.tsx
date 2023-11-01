@@ -328,26 +328,24 @@ function Grid({ r }: { r: Reflect<M> }) {
           const active = source && source.state <= SourceState.Stopping;
           const queued = source && source.state === SourceState.Queued;
           return (
-            <Fragment>
+            <div
+              key={id}
+              className={classnames("cell", id, {
+                active,
+                queued,
+              })}
+              style={
+                enabledCells[id]
+                  ? { backgroundColor: enabledCells[id].color }
+                  : {}
+              }
+              onMouseDown={() => handleCellClick(id)}
+            >
               <div
-                key={id}
-                className={classnames("cell", id, {
-                  active,
-                  queued,
-                })}
-                style={
-                  enabledCells[id]
-                    ? { backgroundColor: enabledCells[id].color }
-                    : {}
-                }
-                onMouseDown={() => handleCellClick(id)}
-              >
-                <div
-                  className="cellHighlight"
-                  style={selfColor ? { backgroundColor: selfColor } : {}}
-                />
-              </div>
-            </Fragment>
+                className="cellHighlight"
+                style={selfColor ? { backgroundColor: selfColor } : {}}
+              />
+            </div>
           );
         })}
       </div>
