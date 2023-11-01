@@ -1,12 +1,13 @@
 // src/App.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./App.css";
 import Grid from "./Grid";
 import LoopLogo from "../src/assets/loop-logo.svg?react";
 import { Reflect } from "@rocicorp/reflect/client";
 import { M, mutators } from "../reflect/mutators";
 import CursorField from "./CursorField";
+import { Rect } from "./coordinates";
 
 const r = new Reflect({
   roomID: "r1",
@@ -50,13 +51,74 @@ function useEnsureLocation(r: Reflect<M> | null) {
   }, [location, r]);
 }
 
+function useWindowSize() {
+  const [windowSize, setWindowSize] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
+  useLayoutEffect(() => {
+    setWindowSize(getWindowSize());
+
+    const handleWindowResize = () => {
+      setWindowSize(getWindowSize());
+    };
+    window.addEventListener("resize", handleWindowResize);
+
+    return () => {
+      window.removeEventListener("resize", handleWindowResize);
+    };
+  }, []);
+  return windowSize;
+}
+
+function getWindowSize() {
+  return {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+}
+
+function useElementSize<T extends Element>(deps: unknown[]) {
+  const ref = useRef<T>(null);
+  const [rect, setRect] = useState<Rect | null>(null);
+  useLayoutEffect(() => {
+    if (!ref.current) {
+      return;
+    }
+
+    const cr = ref.current.getBoundingClientRect();
+    setRect(
+      new Rect(
+        cr.left + ref.current.ownerDocument.documentElement.scrollLeft,
+        cr.top + ref.current.ownerDocument.documentElement.scrollTop,
+        cr.width,
+        cr.height
+      )
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, deps);
+  return [ref, rect] as const;
+}
+
 const App: React.FC = () => {
   useEnsureLocation(r);
+  const windowSize = useWindowSize();
+  const [appRef, appRect] = useElementSize<HTMLDivElement>([windowSize]);
+  const [docRect, setDocRect] = useState<Rect | null>(null);
+
+  useEffect(() => {
+    setDocRect(
+      new Rect(0, 0, document.body.scrollWidth, document.body.scrollHeight)
+    );
+  }, [windowSize]);
+
   return (
-    <div className="App">
+    <div className="App" ref={appRef}>
       <LoopLogo className="loopLogo" />
       <Grid r={r} />
-      <CursorField r={r} />
+      {appRect && docRect ? (
+        <CursorField r={r} appRect={appRect} docRect={docRect} />
+      ) : null}
     </div>
   );
 };
