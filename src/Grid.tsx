@@ -341,7 +341,9 @@ function Grid() {
           Click or tap anywhere to start audio 🔊
         </p>
         <div className={`presenceAvatars ${audioInitialized ? "" : "hidden"}`}>
-          Presence indicators
+          <span className="presenceAvatar">
+            🇺🇸
+          </span>
         </div>
       </div>
       <canvas
