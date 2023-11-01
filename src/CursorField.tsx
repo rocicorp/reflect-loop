@@ -4,42 +4,71 @@ import "./CursorField.css";
 import { M } from "../reflect/mutators.js";
 import { useClient } from "../reflect/subscriptions.js";
 import { usePresence } from "@rocicorp/reflect/react";
+import {
+  Rect,
+  coordinateToPosition,
+  positionToCoordinate,
+} from "./coordinates.js";
 
-export default function CursorField({ r }: { r: Reflect<M> }) {
+export default function CursorField({
+  r,
+  appRect,
+  docRect,
+}: {
+  r: Reflect<M>;
+  appRect: Rect;
+  docRect: Rect;
+}) {
   useEffect(() => {
     const handler = ({ pageX, pageY }: { pageX: number; pageY: number }) => {
-      void r.mutate.updateCursor({
-        x: pageX,
-        y: pageY,
-      });
+      const coordinate = positionToCoordinate(
+        {
+          x: pageX,
+          y: pageY,
+        },
+        appRect,
+        docRect
+      );
+      void r.mutate.updateCursor(coordinate);
     };
     window.addEventListener("mousemove", handler);
     return () => window.removeEventListener("mousemove", handler);
-  }, [r]);
+  }, [r, appRect, docRect]);
 
   const clientStateIDs = usePresence(r);
 
   return (
     <>
       {clientStateIDs.map((id) => (
-        <Cursor r={r} id={id} key={id} />
+        <Cursor r={r} id={id} key={id} appRect={appRect} docRect={docRect} />
       ))}
     </>
   );
 }
 
-function Cursor({ r, id }: { r: Reflect<M>; id: string }) {
+function Cursor({
+  r,
+  id,
+  appRect,
+  docRect,
+}: {
+  r: Reflect<M>;
+  id: string;
+  appRect: Rect;
+  docRect: Rect;
+}) {
   const cs = useClient(r, id);
   if (!cs) return null;
 
   const { cursor, color, location } = cs;
   if (!cursor) return null;
+  const cursorCoordinates = coordinateToPosition(cursor, appRect, docRect);
 
   return (
     <div
       className="cursor"
       style={{
-        transform: `translate3d(${cursor.x}px, ${cursor.y}px, 0)`,
+        transform: `translate3d(${cursorCoordinates.x}px, ${cursorCoordinates.y}px, 0)`,
       }}
     >
       {
