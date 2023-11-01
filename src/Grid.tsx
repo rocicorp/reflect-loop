@@ -1,17 +1,17 @@
-import { useEffect, useReducer, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import "./Grid.css";
-import { Reflect } from "@rocicorp/reflect/client";
-import { mutators } from "../reflect/mutators";
-import { coordsToID, gridSize, indexToID, listCells, numCells } from "./cell";
+import {
+  coordsToID,
+  gridSize,
+  indexToID,
+  listCells,
+  numCells,
+} from "../reflect/model/cell";
 import classnames from "classnames";
 import { useSubscribe } from "replicache-react";
-
-const r = new Reflect({
-  roomID: "r1",
-  userID: "anon",
-  mutators,
-  server: import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/",
-});
+import { Reflect } from "@rocicorp/reflect/client";
+import { M } from "../reflect/mutators.js";
+import { useSelfClient, useSelfColor } from "../reflect/subscriptions.js";
 
 enum SourceState {
   Unqueued = -1,
@@ -72,9 +72,9 @@ class SourceNode extends AudioBufferSourceNode {
   }
 }
 
-function Grid() {
+function Grid({ r }: { r: Reflect<M> }) {
+  const selfColor = useSelfColor(r);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
-  const [, onSourceNodeChange] = useReducer((x) => x + 1, 0);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [audioInitialized, setAudioInitialized] = useState(false);
@@ -157,6 +157,9 @@ function Grid() {
   // TODO: Add a play button overload so users know they need to click
   useEffect(() => {
     const handler = () => {
+      if (audioInitialized) {
+        return;
+      }
       audioContextRef.current?.resume().then(() => {
         if (audioContextRef.current?.state === "running") {
           setAudioInitialized(true);
@@ -294,8 +297,6 @@ function Grid() {
         source.loop = true;
         source.connect(analyserRef.current);
         analyserRef.current.connect(audioContextRef.current.destination);
-        source.addEventListener("started", onSourceNodeChange);
-        source.addEventListener("stopped", onSourceNodeChange);
         source.start(
           0,
           audioContextRef.current.currentTime % audioBuffers[0].duration
@@ -305,10 +306,6 @@ function Grid() {
       for (const id of dels) {
         const node = sources.current[id];
         node.stop();
-      }
-
-      if (adds.length > 0 || dels.length > 0) {
-        onSourceNodeChange();
       }
     }
   }, [audioBuffers, enabledCells, sources]);
@@ -331,14 +328,26 @@ function Grid() {
           const active = source && source.state <= SourceState.Stopping;
           const queued = source && source.state === SourceState.Queued;
           return (
-            <div
-              key={id}
-              className={classnames("cell", id, {
-                active,
-                queued,
-              })}
-              onMouseDown={() => handleCellClick(id)}
-            />
+            <Fragment>
+              <div
+                key={id}
+                className={classnames("cell", id, {
+                  active,
+                  queued,
+                })}
+                style={
+                  enabledCells[id]
+                    ? { backgroundColor: enabledCells[id].color }
+                    : {}
+                }
+                onMouseDown={() => handleCellClick(id)}
+              >
+                <div
+                  className="cellHighlight"
+                  style={selfColor ? { backgroundColor: selfColor } : {}}
+                />
+              </div>
+            </Fragment>
           );
         })}
       </div>

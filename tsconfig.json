@@ -21,6 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"],
+  "include": ["src", "reflect/model/cell.ts", "reflect/model/colors.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
