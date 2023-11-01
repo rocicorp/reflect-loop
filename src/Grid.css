@@ -25,29 +25,23 @@
   box-sizing: border-box;
 }
 
-.cell::before {
-  content: "";
+.cellHighlight {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(252, 32, 138, 0.2);
   opacity: 0;
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
 
-.cell:hover::before {
-  opacity: 1;
+.cell:hover > .cellHighlight {
+  opacity: 0.7;
 }
 
 .cell.queued {
   animation: pulse 1.5s infinite;
-}
-
-.cell.active {
-  background-color: #fc208a;
 }
 
 .waveform {
@@ -77,7 +71,6 @@
 
 /* For mobile devices with width up to 600px */
 @media (max-width: 600px) {
-
   .waveform {
     width: 100%;
   }
