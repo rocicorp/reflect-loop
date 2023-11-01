@@ -31,7 +31,7 @@ function useEnsureLocation(r: Reflect<M> | null) {
       .then((data) => {
         setLocation(data);
       });
-  });
+  }, []);
 
   useEffect(() => {
     if (r === null || location === null) {
