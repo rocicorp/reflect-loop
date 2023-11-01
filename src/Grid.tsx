@@ -11,7 +11,7 @@ import classnames from "classnames";
 import { useSubscribe } from "replicache-react";
 import { Reflect } from "@rocicorp/reflect/client";
 import { M } from "../reflect/mutators.js";
-import { useSelfClient, useSelfColor } from "../reflect/subscriptions.js";
+import { useSelfColor } from "../reflect/subscriptions.js";
 
 enum SourceState {
   Unqueued = -1,
