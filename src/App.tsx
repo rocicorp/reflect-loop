@@ -26,7 +26,7 @@ function useEnsureLocation(r: Reflect<M> | null) {
   const [location, setLocation] = useState<Location | null>(null);
 
   useEffect(() => {
-    void fetch("/api/get-location")
+    void fetch("https://reflect.net/api/get-location")
       .then((resp) => resp.json())
       .then((data) => {
         setLocation(data);
