@@ -1,8 +1,19 @@
 /* src/Grid.css */
 
-.audioStartMessage {
+.presenceContainer {
+  position: relative;
   margin-bottom: 2rem;
+}
+
+.audioStartMessage {
   cursor: default;
+}
+
+.presenceAvatars {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  transition: opacity 0.5s;
 }
 
 .hidden {

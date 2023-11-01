@@ -336,9 +336,14 @@ function Grid() {
 
   return (
     <div>
-      <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
-        Click or tap anywhere to start audio 🔊
-      </p>
+      <div className="presenceContainer">
+        <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
+          Click or tap anywhere to start audio 🔊
+        </p>
+        <div className={`presenceAvatars ${audioInitialized ? "" : "hidden"}`}>
+          Presence indicators
+        </div>
+      </div>
       <canvas
         ref={canvasRef}
         className="waveform"
