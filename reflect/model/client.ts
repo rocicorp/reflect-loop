@@ -4,16 +4,21 @@ import { WriteTransaction } from "@rocicorp/reflect";
 import { colorToString, idToColor } from "./colors";
 
 const cursorSchema = v.object({ x: v.number(), y: v.number() });
+const locationSchema = v.object({
+  city: v.string(),
+  country: v.string(),
+});
 const clientModelSchema = v.object({
   id: v.string(),
   color: v.string(),
   cursor: cursorSchema.optional(),
-  location: v.string().optional(),
+  location: locationSchema.optional(),
 });
 
-export type CursorModel = v.Infer<typeof cursorSchema>;
-export type ClientModel = v.Infer<typeof clientModelSchema>;
-export type ClientModelUpdate = Update<ClientModel>;
+export type Cursor = v.Infer<typeof cursorSchema>;
+export type Location = v.Infer<typeof locationSchema>;
+export type Client = v.Infer<typeof clientModelSchema>;
+export type ClientUpdate = Update<Client>;
 const clientGenerateResult = generate(
   "client",
   clientModelSchema.parse.bind(clientModelSchema)
@@ -32,7 +37,7 @@ export const initClient = async (tx: WriteTransaction) => {
 
 export const updateLocation = async (
   tx: WriteTransaction,
-  { location }: { location: string }
+  location: Location
 ) => {
   if (!allowLocation(location)) {
     return;
@@ -45,19 +50,15 @@ export const updateLocation = async (
   await clientGenerateResult.update(tx, client);
 };
 
-function allowLocation(location: string | null): boolean {
+function allowLocation(location: Location): boolean {
   return (
-    typeof location === "string" &&
-    !/\.\/\\:<>\|/.test(location) &&
-    // Note: this includes the flag and space too.
-    location.length <= 24
+    typeof location === "object" &&
+    !/\.\/\\:<>\|/.test(location.country) &&
+    !/\.\/\\:<>\|/.test(location.city)
   );
 }
 
-export const updateCursor = async (
-  tx: WriteTransaction,
-  cursor: CursorModel
-) => {
+export const updateCursor = async (tx: WriteTransaction, cursor: Cursor) => {
   await clientGenerateResult.update(tx, {
     id: tx.clientID,
     cursor,

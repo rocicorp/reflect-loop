@@ -2,13 +2,14 @@ import { Reflect } from "@rocicorp/reflect/client";
 import { useEffect } from "react";
 import "./CursorField.css";
 import { M } from "../reflect/mutators.js";
-import { useClient } from "../reflect/subscriptions.js";
-import { usePresence } from "@rocicorp/reflect/react";
+import { usePresentClients } from "../reflect/subscriptions.js";
 import {
   Rect,
   coordinateToPosition,
   positionToCoordinate,
 } from "./coordinates.js";
+import { displayStringForLocation } from "./location.js";
+import { Client } from "../reflect/model/client.js";
 
 export default function CursorField({
   r,
@@ -35,35 +36,34 @@ export default function CursorField({
     return () => window.removeEventListener("mousemove", handler);
   }, [r, appRect, docRect]);
 
-  const clientStateIDs = usePresence(r);
-
+  const presentClients = usePresentClients(r);
   return (
     <>
-      {clientStateIDs.map((id) => (
-        <Cursor r={r} id={id} key={id} appRect={appRect} docRect={docRect} />
+      {presentClients.map((client) => (
+        <Cursor
+          client={client}
+          key={client.id}
+          appRect={appRect}
+          docRect={docRect}
+        />
       ))}
     </>
   );
 }
 
 function Cursor({
-  r,
-  id,
+  client,
   appRect,
   docRect,
 }: {
-  r: Reflect<M>;
-  id: string;
+  client: Client;
   appRect: Rect;
   docRect: Rect;
 }) {
-  const cs = useClient(r, id);
-  if (!cs) return null;
+  const { cursor, color, location } = client;
 
-  const { cursor, color, location } = cs;
   if (!cursor) return null;
   const cursorCoordinates = coordinateToPosition(cursor, appRect, docRect);
-
   return (
     <div
       className="cursor"
@@ -94,10 +94,7 @@ function Cursor({
         }}
       >
         <div className="location-name">
-          {location ??
-            `Earth ${
-              ["🌎", "🌍", "🌏"][Math.abs((id.codePointAt(0) ?? 0) % 3)]
-            }`}
+          {displayStringForLocation(location)}
         </div>
       </div>
     </div>

@@ -2,7 +2,6 @@
 
 .presenceContainer {
   position: relative;
-  margin-bottom: 2rem;
   height: 3rem;
 }
 
@@ -10,29 +9,6 @@
   margin: 0;
   height: 3rem;
   line-height: 3rem;
-}
-
-.presenceAvatars {
-  position: absolute;
-  top: 0;
-  width: 100%;
-  transition: opacity 0.5s;
-}
-
-.presenceAvatar {
-  padding: 0.8125rem;
-  text-align: center;
-  line-height: 1rem;
-  border: 3px solid #FC49AB;
-  border-radius: 50%;
-  height: 1rem;
-  width: 1rem;
-  display: inline-block;
-  margin-right: 0.5rem;
-}
-
-.presenceAvatar:last-child {
-  margin-right: 0;
 }
 
 .hidden {

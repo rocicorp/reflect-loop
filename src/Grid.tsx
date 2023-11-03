@@ -12,6 +12,7 @@ import { useSubscribe } from "replicache-react";
 import { Reflect } from "@rocicorp/reflect/client";
 import { M } from "../reflect/mutators.js";
 import { useSelfColor } from "../reflect/subscriptions.js";
+import PresenceBar from "./PresenceBar.js";
 
 enum SourceState {
   Unqueued = -1,
@@ -160,6 +161,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       if (audioInitialized) {
         return;
       }
+      console.log("resume");
       audioContextRef.current?.resume().then(() => {
         if (audioContextRef.current?.state === "running") {
           setAudioInitialized(true);
@@ -269,6 +271,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       return;
     }
 
+    console.log("add/dels");
     // loop through each row
     // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
     // else if there is a delete just stop it
@@ -310,17 +313,14 @@ function Grid({ r }: { r: Reflect<M> }) {
     }
   }, [audioBuffers, enabledCells, sources]);
 
+  console.log("Grid");
   return (
     <div>
+      <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
+        Click or tap anywhere to start audio 🔊
+      </p>
       <div className="presenceContainer">
-        <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
-          Click or tap anywhere to start audio 🔊
-        </p>
-        <div className={`presenceAvatars ${audioInitialized ? "" : "hidden"}`}>
-          <span className="presenceAvatar">
-            🇺🇸
-          </span>
-        </div>
+        <PresenceBar r={r} />
       </div>
       <canvas
         ref={canvasRef}

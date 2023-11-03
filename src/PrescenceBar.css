@@ -1,0 +1,22 @@
+.presenceAvatars {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  transition: opacity 0.5s;
+}
+
+.presenceAvatar {
+  padding: 0.8125rem;
+  text-align: center;
+  line-height: 1rem;
+  border: 3px solid #fc49ab;
+  border-radius: 50%;
+  height: 1rem;
+  width: 1rem;
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+.presenceAvatar:last-child {
+  margin-right: 0;
+}
