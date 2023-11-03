@@ -316,10 +316,10 @@ function Grid({ r }: { r: Reflect<M> }) {
   console.log("Grid");
   return (
     <div>
+      <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
+        Click or tap anywhere to start audio 🔊
+      </p>
       <div className="presenceContainer">
-        <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
-          Click or tap anywhere to start audio 🔊
-        </p>
         <PresenceBar r={r} />
       </div>
       <canvas
