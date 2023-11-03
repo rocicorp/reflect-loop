@@ -61,9 +61,9 @@ function Cursor({
   docRect: Rect;
 }) {
   const { cursor, color, location } = client;
+
   if (!cursor) return null;
   const cursorCoordinates = coordinateToPosition(cursor, appRect, docRect);
-
   return (
     <div
       className="cursor"

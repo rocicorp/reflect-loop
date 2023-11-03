@@ -161,6 +161,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       if (audioInitialized) {
         return;
       }
+      console.log("resume");
       audioContextRef.current?.resume().then(() => {
         if (audioContextRef.current?.state === "running") {
           setAudioInitialized(true);
@@ -270,6 +271,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       return;
     }
 
+    console.log("add/dels");
     // loop through each row
     // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
     // else if there is a delete just stop it
@@ -311,6 +313,7 @@ function Grid({ r }: { r: Reflect<M> }) {
     }
   }, [audioBuffers, enabledCells, sources]);
 
+  console.log("Grid");
   return (
     <div>
       <div className="presenceContainer">
