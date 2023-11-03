@@ -7,7 +7,6 @@ import {
   listCells,
   numCells,
 } from "../reflect/model/cell";
-import classnames from "classnames";
 import { useSubscribe } from "replicache-react";
 import { Reflect } from "@rocicorp/reflect/client";
 import { M } from "../reflect/mutators.js";
@@ -46,7 +45,7 @@ class SourceNode extends AudioBufferSourceNode {
     const delta = when ? when - this.context.currentTime : 0;
     this.#timerID = window.setTimeout(() => {
       this.#state = SourceState.Playing;
-      this.dispatchEvent(new Event("started"));
+      //this.dispatchEvent(new Event("started"));
     }, delta * 1000);
   }
 
@@ -68,13 +67,14 @@ class SourceNode extends AudioBufferSourceNode {
     const delta = when ? when - this.context.currentTime : 0;
     this.#timerID = window.setTimeout(() => {
       this.#state = SourceState.Stopped;
-      this.dispatchEvent(new Event("stopped"));
+      //this.dispatchEvent(new Event("stopped"));
     }, delta * 1000);
   }
 }
 
 function Grid({ r }: { r: Reflect<M> }) {
   const selfColor = useSelfColor(r);
+  const [hoveredID, setHoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -257,13 +257,6 @@ function Grid({ r }: { r: Reflect<M> }) {
     {}
   );
 
-  const handleCellClick = (cellID: string) => {
-    r.mutate.setCellEnabled({
-      id: cellID,
-      enabled: !(cellID in enabledCells),
-    });
-  };
-
   const sources = useRef<Record<string, SourceNode>>({});
 
   useEffect(() => {
@@ -283,7 +276,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         const id = coordsToID(x, y);
         const source = sources.current[id];
         const active = source && source.state <= SourceState.Playing;
-        const added = id in enabledCells && !active;
+        const added = (id in enabledCells || id === hoveredID) && !active;
         const deleted = active && !(id in enabledCells);
         if (added) {
           adds.push(id);
@@ -311,7 +304,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         node.stop();
       }
     }
-  }, [audioBuffers, enabledCells, sources]);
+  }, [audioBuffers, enabledCells, sources, hoveredID]);
 
   console.log("Grid");
   return (
@@ -331,22 +324,28 @@ function Grid({ r }: { r: Reflect<M> }) {
       <div className="grid">
         {new Array(numCells).fill(null).map((_, i) => {
           const id = indexToID(i);
-          const source = sources.current[id];
-          const active = source && source.state <= SourceState.Stopping;
-          const queued = source && source.state === SourceState.Queued;
           return (
             <div
               key={id}
-              className={classnames("cell", id, {
-                active,
-                queued,
-              })}
+              id={id}
+              className="cell"
               style={
                 enabledCells[id]
                   ? { backgroundColor: enabledCells[id].color }
                   : {}
               }
-              onMouseDown={() => handleCellClick(id)}
+              onMouseOver={() => {
+                setHoveredID(id);
+              }}
+              onMouseOut={() => {
+                setHoveredID((existing) => (existing === id ? null : existing));
+              }}
+              onMouseDown={() =>
+                r.mutate.setCellEnabled({
+                  id,
+                  enabled: !(id in enabledCells),
+                })
+              }
             >
               <div
                 className="cellHighlight"
