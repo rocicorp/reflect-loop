@@ -39,15 +39,7 @@ function useEnsureLocation(r: Reflect<M> | null) {
       return;
     }
     const { country, city } = location;
-    const flagEmoji = String.fromCodePoint(
-      ...country
-        .toUpperCase()
-        .split("")
-        .map((char: string) => 127397 + char.charCodeAt(0))
-    );
-    void r.mutate.updateLocation({
-      location: `${decodeURI(city)} ${flagEmoji}`,
-    });
+    void r.mutate.updateLocation({ country, city });
   }, [location, r]);
 }
 

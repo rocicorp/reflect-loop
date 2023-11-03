@@ -12,6 +12,7 @@ import { useSubscribe } from "replicache-react";
 import { Reflect } from "@rocicorp/reflect/client";
 import { M } from "../reflect/mutators.js";
 import { useSelfColor } from "../reflect/subscriptions.js";
+import PresenceBar from "./PresenceBar.js";
 
 enum SourceState {
   Unqueued = -1,
@@ -316,11 +317,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
           Click or tap anywhere to start audio 🔊
         </p>
-        <div className={`presenceAvatars ${audioInitialized ? "" : "hidden"}`}>
-          <span className="presenceAvatar">
-            🇺🇸
-          </span>
-        </div>
+        <PresenceBar r={r} />
       </div>
       <canvas
         ref={canvasRef}
