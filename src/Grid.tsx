@@ -3,7 +3,6 @@ import "./Grid.css";
 import {
   coordsToID,
   gridSize,
-  idToCoords,
   indexToID,
   listCells,
   numCells,
