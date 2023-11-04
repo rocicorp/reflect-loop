@@ -312,7 +312,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         // connect the AudioBufferSourceNode to the gainNode
         // and the gainNode to the destination
         gainNode.gain.setValueAtTime(0, 0);
-        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.4);
+        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.6);
         source.connect(gainNode);
         gainNode.connect(analyserRef.current);
         source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
