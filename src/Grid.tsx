@@ -278,7 +278,7 @@ function Grid({ r }: { r: Reflect<M> }) {
     // else if there is a delete just stop it
 
     const audioCtx = audioContextRef.current;
-    const hoveredCoords = hoveredID && idToCoords(hoveredID);
+    //const hoveredCoords = hoveredID && idToCoords(hoveredID);
     for (let y = 0; y < gridSize; y++) {
       const adds: string[] = [];
       const dels: string[] = [];
@@ -286,10 +286,8 @@ function Grid({ r }: { r: Reflect<M> }) {
         const id = coordsToID(x, y);
         const source = sources.current[id];
         const active = source && source.state == SourceState.Playing;
-        const shouldBeActive =
-          id === hoveredID ||
-          (id in enabledCells &&
-            (hoveredCoords === null || hoveredCoords[1] !== y));
+        const shouldBeActive = id === hoveredID || id in enabledCells; /*&&
+            (hoveredCoords === null || hoveredCoords[1] !== y)*/
         const added = shouldBeActive && !active;
         const deleted = active && !shouldBeActive;
         if (added) {
