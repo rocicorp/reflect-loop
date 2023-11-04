@@ -3,6 +3,7 @@ import "./Grid.css";
 import {
   coordsToID,
   gridSize,
+  idToCoords,
   indexToID,
   listCells,
   numCells,
@@ -24,10 +25,12 @@ enum SourceState {
 class SourceNode extends AudioBufferSourceNode {
   #timerID: number | null = null;
   #state: SourceState;
+  gainNode: GainNode;
 
-  constructor(context: AudioContext, buffer: AudioBuffer) {
+  constructor(context: AudioContext, buffer: AudioBuffer, gainNode: GainNode) {
     super(context, { buffer });
     this.#state = SourceState.Unqueued;
+    this.gainNode = gainNode;
   }
 
   get state() {
@@ -154,6 +157,10 @@ function Grid({ r }: { r: Reflect<M> }) {
     "/samples/row-8-sample-8.mp3",
   ];
 
+  useEffect(() => {
+    analyserRef.current.connect(audioContextRef.current.destination);
+  }, []);
+
   // This enable audio on click.
   // TODO: Add a play button overload so users know they need to click
   useEffect(() => {
@@ -165,6 +172,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       audioContextRef.current?.resume().then(() => {
         if (audioContextRef.current?.state === "running") {
           setAudioInitialized(true);
+          window.removeEventListener("click", handler, false);
         }
       });
     };
@@ -269,15 +277,21 @@ function Grid({ r }: { r: Reflect<M> }) {
     // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
     // else if there is a delete just stop it
 
+    const audioCtx = audioContextRef.current;
+    const hoveredCoords = hoveredID && idToCoords(hoveredID);
     for (let y = 0; y < gridSize; y++) {
       const adds: string[] = [];
       const dels: string[] = [];
       for (let x = 0; x < gridSize; x++) {
         const id = coordsToID(x, y);
         const source = sources.current[id];
-        const active = source && source.state <= SourceState.Playing;
-        const added = (id in enabledCells || id === hoveredID) && !active;
-        const deleted = active && !(id in enabledCells);
+        const active = source && source.state == SourceState.Playing;
+        const shouldBeActive =
+          id === hoveredID ||
+          (id in enabledCells &&
+            (hoveredCoords === null || hoveredCoords[1] !== y));
+        const added = shouldBeActive && !active;
+        const deleted = active && !shouldBeActive;
         if (added) {
           adds.push(id);
         }
@@ -286,22 +300,31 @@ function Grid({ r }: { r: Reflect<M> }) {
         }
       }
       for (const id of adds) {
+        console.log("add", id);
         const source = new SourceNode(
-          audioContextRef.current,
-          audioBuffers[parseInt(id) % audioBuffers.length]
+          audioCtx,
+          audioBuffers[parseInt(id) % audioBuffers.length],
+          audioCtx.createGain()
         );
         source.loop = true;
-        source.connect(analyserRef.current);
-        analyserRef.current.connect(audioContextRef.current.destination);
-        source.start(
-          0,
-          audioContextRef.current.currentTime % audioBuffers[0].duration
-        );
+        const gainNode = source.gainNode;
+
+        // connect the AudioBufferSourceNode to the gainNode
+        // and the gainNode to the destination
+        gainNode.gain.setValueAtTime(0, 0);
+        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.4);
+        source.connect(gainNode);
+        gainNode.connect(analyserRef.current);
+        source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
+
         sources.current[id] = source;
       }
       for (const id of dels) {
-        const node = sources.current[id];
-        node.stop();
+        console.log("del", id);
+        const source = sources.current[id];
+        source.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.4);
+        source.stop(audioCtx.currentTime + 5);
+        delete sources.current[id];
       }
     }
   }, [audioBuffers, enabledCells, sources, hoveredID]);
