@@ -281,7 +281,7 @@ function Grid({ r }: { r: Reflect<M> }) {
     for (const [id, source] of Object.entries(sources.current)) {
       const gain = hoveredID && hoveredID !== id ? 0.25 : 1;
       console.log("top", id, gain);
-      source.gainNode.gain.setTargetAtTime(gain, audioCtx.currentTime, 0.6);
+      source.gainNode.gain.setTargetAtTime(gain, audioCtx.currentTime, 0.2);
     }
     //const hoveredCoords = hoveredID && idToCoords(hoveredID);
     for (let y = 0; y < gridSize; y++) {
@@ -327,7 +327,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         gainNode.gain.setValueAtTime(0, 0);
         const gain = reason === "hovered" ? 1 : hoveredID ? 1 : 0.25;
         console.log(id, gain);
-        gainNode.gain.setTargetAtTime(gain, audioCtx.currentTime, 0.6);
+        gainNode.gain.setTargetAtTime(gain, audioCtx.currentTime, 0.2);
         source.connect(gainNode);
         gainNode.connect(analyserRef.current);
         source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
@@ -337,7 +337,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       for (const id of dels) {
         console.log("del", id);
         const source = sources.current[id];
-        source.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.4);
+        source.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
         source.stop(audioCtx.currentTime + 5);
         delete sources.current[id];
       }
