@@ -25,6 +25,7 @@ class SourceNode extends AudioBufferSourceNode {
   #timerID: number | null = null;
   #state: SourceState;
   gainNode: GainNode;
+  reason: string = "";
 
   constructor(context: AudioContext, buffer: AudioBuffer, gainNode: GainNode) {
     super(context, { buffer });
@@ -277,6 +278,11 @@ function Grid({ r }: { r: Reflect<M> }) {
     // else if there is a delete just stop it
 
     const audioCtx = audioContextRef.current;
+    for (const [id, source] of Object.entries(sources.current)) {
+      const gain = hoveredID && hoveredID !== id ? 0.25 : 1;
+      console.log("top", id, gain);
+      source.gainNode.gain.setTargetAtTime(gain, audioCtx.currentTime, 0.6);
+    }
     //const hoveredCoords = hoveredID && idToCoords(hoveredID);
     for (let y = 0; y < gridSize; y++) {
       const adds: string[] = [];
@@ -285,6 +291,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         const id = coordsToID(x, y);
         const source = sources.current[id];
         const active = source && source.state == SourceState.Playing;
+        //const reason = id === hoveredID ? "hovered" : "selected";
         const shouldBeActive = id === hoveredID || id in enabledCells; /*&&
             (hoveredCoords === null || hoveredCoords[1] !== y)*/
         const added = shouldBeActive && !active;
@@ -295,21 +302,32 @@ function Grid({ r }: { r: Reflect<M> }) {
         if (deleted) {
           dels.push(id);
         }
+        // if (shouldBeActive && active && reason != source.reason) {
+        //   source.gainNode.gain.setTargetAtTime(
+        //     reason === "hovered" ? 1 : 0.3,
+        //     audioCtx.currentTime,
+        //     0.6
+        //   );
+        // }
       }
       for (const id of adds) {
         console.log("add", id);
+        const reason = id === hoveredID ? "hovered" : "selected";
         const source = new SourceNode(
           audioCtx,
           audioBuffers[parseInt(id) % audioBuffers.length],
           audioCtx.createGain()
         );
         source.loop = true;
+        source.reason = reason;
         const gainNode = source.gainNode;
 
         // connect the AudioBufferSourceNode to the gainNode
         // and the gainNode to the destination
         gainNode.gain.setValueAtTime(0, 0);
-        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.6);
+        const gain = reason === "hovered" ? 1 : hoveredID ? 1 : 0.25;
+        console.log(id, gain);
+        gainNode.gain.setTargetAtTime(gain, audioCtx.currentTime, 0.6);
         source.connect(gainNode);
         gainNode.connect(analyserRef.current);
         source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
