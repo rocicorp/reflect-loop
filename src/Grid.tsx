@@ -47,7 +47,6 @@ class SourceNode extends AudioBufferSourceNode {
     const delta = when ? when - this.context.currentTime : 0;
     this.#timerID = window.setTimeout(() => {
       this.#state = SourceState.Playing;
-      //this.dispatchEvent(new Event("started"));
     }, delta * 1000);
   }
 
@@ -69,7 +68,6 @@ class SourceNode extends AudioBufferSourceNode {
     const delta = when ? when - this.context.currentTime : 0;
     this.#timerID = window.setTimeout(() => {
       this.#state = SourceState.Stopped;
-      //this.dispatchEvent(new Event("stopped"));
     }, delta * 1000);
   }
 }
@@ -277,7 +275,6 @@ function Grid({ r }: { r: Reflect<M> }) {
     // else if there is a delete just stop it
 
     const audioCtx = audioContextRef.current;
-    //const hoveredCoords = hoveredID && idToCoords(hoveredID);
     for (let y = 0; y < gridSize; y++) {
       const adds: string[] = [];
       const dels: string[] = [];
@@ -320,7 +317,10 @@ function Grid({ r }: { r: Reflect<M> }) {
         console.log("del", id);
         const source = sources.current[id];
         source.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
-        source.stop(audioCtx.currentTime + 5);
+        source.stop(audioCtx.currentTime + 1);
+        setTimeout(() => {
+          source.disconnect();
+        }, 5000);
         delete sources.current[id];
       }
     }

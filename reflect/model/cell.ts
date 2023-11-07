@@ -35,17 +35,6 @@ export async function setCellEnabled(
   } else {
     await deleteCell(tx, id);
   }
-
-  // const [x, y] = idToCoords(id);
-  // for (let i = 0; i < gridSize; i++) {
-  //   const id = coordsToID(i, y);
-  //   if (i === x && enabled) {
-  //     const client = await getClient(tx, tx.clientID);
-  //     await initCell(tx, { id, color: client?.color ?? "pink" });
-  //   } else {
-  //     await deleteCell(tx, id);
-  //   }
-  // }
 }
 
 export function idToCoords(id: string): [number, number] {
