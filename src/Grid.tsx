@@ -74,11 +74,11 @@ class SourceNode extends AudioBufferSourceNode {
 
 function Grid({ r }: { r: Reflect<M> }) {
   const selfColor = useSelfColor(r);
+  const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [audioInitialized, setAudioInitialized] = useState(false);
   const audioContextRef = useRef(new window.AudioContext());
   const analyserRef = useRef<AnalyserNode>(
     audioContextRef.current.createAnalyser()
@@ -161,20 +161,47 @@ function Grid({ r }: { r: Reflect<M> }) {
   // This enable audio on click.
   // TODO: Add a play button overload so users know they need to click
   useEffect(() => {
-    const handler = () => {
-      if (audioInitialized) {
+    let audioInitialized = false;
+    let initializingAudio = false;
+    const handler = async () => {
+      if (audioInitialized || initializingAudio) {
         return;
       }
-      console.log("resume");
-      audioContextRef.current?.resume().then(() => {
-        if (audioContextRef.current?.state === "running") {
-          setAudioInitialized(true);
-          window.removeEventListener("click", handler, false);
+      try {
+        const silenceDataURL =
+          "data:audio/mp3;base64,//MkxAAHiAICWABElBeKPL/RANb2w+yiT1g/gTok//lP/W/l3h8QO/OCdCqCW2Cw//MkxAQHkAIWUAhEmAQXWUOFW2dxPu//9mr60ElY5sseQ+xxesmHKtZr7bsqqX2L//MkxAgFwAYiQAhEAC2hq22d3///9FTV6tA36JdgBJoOGgc+7qvqej5Zu7/7uI9l//MkxBQHAAYi8AhEAO193vt9KGOq+6qcT7hhfN5FTInmwk8RkqKImTM55pRQHQSq//MkxBsGkgoIAABHhTACIJLf99nVI///yuW1uBqWfEu7CgNPWGpUadBmZ////4sL//MkxCMHMAH9iABEmAsKioqKigsLCwtVTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVV//MkxCkECAUYCAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+        const tag = document.createElement("audio");
+        tag.controls = false;
+        tag.preload = "auto";
+        tag.loop = true;
+        tag.src = silenceDataURL;
+        try {
+          await tag.play();
+        } catch (e) {
+          console.error("Failed to start audio tag", e);
         }
-      });
+        if (!audioContextRef.current) {
+          return;
+        }
+        try {
+          await audioContextRef.current.resume();
+          audioInitialized = true;
+          setAudioInitialized(true);
+          removeEventListeners();
+        } catch (e) {
+          console.error("Failed to start audio context", e);
+        }
+      } finally {
+        initializingAudio = false;
+      }
     };
+    const removeEventListeners = () => {
+      window.removeEventListener("touchstart", handler, false);
+      window.removeEventListener("click", handler, false);
+    };
+    window.addEventListener("touchstart", handler, false);
     window.addEventListener("click", handler, false);
-    return () => window.removeEventListener("click", handler, false);
+    return removeEventListeners;
   }, []);
 
   const drawWaveform = () => {
@@ -269,7 +296,6 @@ function Grid({ r }: { r: Reflect<M> }) {
       return;
     }
 
-    console.log("add/dels");
     // loop through each row
     // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
     // else if there is a delete just stop it
