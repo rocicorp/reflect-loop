@@ -170,15 +170,15 @@ function Grid({ r }: { r: Reflect<M> }) {
       if (!audioContext) {
         return;
       }
+      const silentAudioBuffer = audioContext.createBuffer(1, 1, 22050);
+      const silentSource = audioContext.createBufferSource();
+      silentSource.buffer = silentAudioBuffer;
+      silentSource.connect(audioContext.destination);
+      silentSource.start(0);
       audioContext.resume().then(() => {
         if (audioContext.state === "running") {
           setAudioInitialized(true);
 
-          const silentAudioBuffer = audioContext.createBuffer(1, 1, 22050);
-          const silentSource = audioContext.createBufferSource();
-          silentSource.buffer = silentAudioBuffer;
-          silentSource.connect(audioContext.destination);
-          silentSource.start(0);
           window.removeEventListener("click", handler, false);
         }
       });
