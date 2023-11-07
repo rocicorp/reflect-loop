@@ -166,6 +166,32 @@ function Grid({ r }: { r: Reflect<M> }) {
         return;
       }
       console.log("resume");
+
+      const silenceDataURL =
+        "data:audio/mp3;base64,//MkxAAHiAICWABElBeKPL/RANb2w+yiT1g/gTok//lP/W/l3h8QO/OCdCqCW2Cw//MkxAQHkAIWUAhEmAQXWUOFW2dxPu//9mr60ElY5sseQ+xxesmHKtZr7bsqqX2L//MkxAgFwAYiQAhEAC2hq22d3///9FTV6tA36JdgBJoOGgc+7qvqej5Zu7/7uI9l//MkxBQHAAYi8AhEAO193vt9KGOq+6qcT7hhfN5FTInmwk8RkqKImTM55pRQHQSq//MkxBsGkgoIAABHhTACIJLf99nVI///yuW1uBqWfEu7CgNPWGpUadBmZ////4sL//MkxCMHMAH9iABEmAsKioqKigsLCwtVTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVV//MkxCkECAUYCAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+      const tag = document.createElement("audio");
+      tag.controls = false;
+      tag.preload = "auto";
+      tag.loop = false;
+      tag.src = silenceDataURL;
+      // tag.onended = function () {
+      // //   console.log("HTMLAudio unlocked!");
+      // //   isHTMLAudioUnlocked = true;
+      // //   if (isWebAudioUnlocked && isHTMLAudioUnlocked) {
+      // //     console.log("WebAudio unlocked and playable w/ mute toggled on!");
+      // //     window.removeEventListener("mousedown", unlock);
+      // //   }
+      // // };
+      const p = tag.play();
+      if (p)
+        p.then(
+          function () {
+            console.log("play success");
+          },
+          function (reason) {
+            console.log("play failed", reason);
+          }
+        );
       audioContextRef.current?.resume().then(() => {
         if (audioContextRef.current?.state === "running") {
           setAudioInitialized(true);
