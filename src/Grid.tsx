@@ -179,12 +179,12 @@ function Grid({ r }: { r: Reflect<M> }) {
         if (audioContext.state === "running") {
           setAudioInitialized(true);
 
-          window.removeEventListener("click", handler, false);
+          window.removeEventListener("touchstart", handler, false);
         }
       });
     };
-    window.addEventListener("click", handler, false);
-    return () => window.removeEventListener("click", handler, false);
+    window.addEventListener("touchstart", handler);
+    return () => window.removeEventListener("touchstart", handler, false);
   }, []);
 
   const drawWaveform = () => {
@@ -342,6 +342,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
         Click or tap anywhere to start audio 🔊
       </p>
+      {audioContextRef.current?.state}
       <div className="presenceContainer">
         <PresenceBar r={r} />
       </div>
