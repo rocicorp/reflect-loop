@@ -74,6 +74,7 @@ class SourceNode extends AudioBufferSourceNode {
 
 function Grid({ r }: { r: Reflect<M> }) {
   const selfColor = useSelfColor(r);
+  const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
@@ -185,6 +186,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         try {
           await audioContextRef.current.resume();
           audioInitialized = true;
+          setAudioInitialized(true);
           removeEventListeners();
         } catch (e) {
           console.error("Failed to start audio context", e);
