@@ -309,7 +309,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         // connect the AudioBufferSourceNode to the gainNode
         // and the gainNode to the destination
         gainNode.gain.setValueAtTime(0, 0);
-        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.6);
+        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.2);
         source.connect(gainNode);
         gainNode.connect(analyserRef.current);
         source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
@@ -319,7 +319,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       for (const id of dels) {
         console.log("del", id);
         const source = sources.current[id];
-        source.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.4);
+        source.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
         source.stop(audioCtx.currentTime + 5);
         delete sources.current[id];
       }
