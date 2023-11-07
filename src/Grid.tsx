@@ -172,7 +172,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       const tag = document.createElement("audio");
       tag.controls = false;
       tag.preload = "auto";
-      tag.loop = false;
+      tag.loop = true;
       tag.src = silenceDataURL;
       // tag.onended = function () {
       // //   console.log("HTMLAudio unlocked!");
