@@ -166,25 +166,20 @@ function Grid({ r }: { r: Reflect<M> }) {
         return;
       }
       console.log("resume");
-      const audioContext = audioContextRef.current;
-      if (!audioContext) {
-        return;
-      }
-      const silentAudioBuffer = audioContext.createBuffer(1, 1, 22050);
-      const silentSource = audioContext.createBufferSource();
-      silentSource.buffer = silentAudioBuffer;
-      silentSource.connect(audioContext.destination);
-      silentSource.start(0);
-      audioContext.resume().then(() => {
-        if (audioContext.state === "running") {
+      audioContextRef.current?.resume().then(() => {
+        if (audioContextRef.current?.state === "running") {
           setAudioInitialized(true);
-
-          window.removeEventListener("touchstart", handler, false);
+          cleanup();
         }
       });
     };
-    window.addEventListener("touchstart", handler);
-    return () => window.removeEventListener("touchstart", handler, false);
+    const cleanup = () => {
+      window.removeEventListener("touchstart", handler, false);
+      window.removeEventListener("click", handler, false);
+    };
+    window.addEventListener("touchstart", handler, false);
+    window.addEventListener("click", handler, false);
+    return cleanup;
   }, []);
 
   const drawWaveform = () => {
@@ -342,7 +337,6 @@ function Grid({ r }: { r: Reflect<M> }) {
       <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
         Click or tap anywhere to start audio 🔊
       </p>
-      {audioContextRef.current?.state}
       <div className="presenceContainer">
         <PresenceBar r={r} />
       </div>
