@@ -156,6 +156,13 @@ function Grid({ r }: { r: Reflect<M> }) {
 
   useEffect(() => {
     analyserRef.current.connect(audioContextRef.current.destination);
+
+    const audioContext = new AudioContext();
+    const silentAudioBuffer = audioContext.createBuffer(1, 1, 22050);
+    const silentSource = audioContext.createBufferSource();
+    silentSource.buffer = silentAudioBuffer;
+    silentSource.connect(audioContext.destination);
+    silentSource.start(0);
   }, []);
 
   // This enable audio on click.
