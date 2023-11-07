@@ -29,15 +29,11 @@ export async function setCellEnabled(
   tx: WriteTransaction,
   { id, enabled }: { id: string; enabled: boolean }
 ) {
-  const [x, y] = idToCoords(id);
-  for (let i = 0; i < gridSize; i++) {
-    const id = coordsToID(i, y);
-    if (i === x && enabled) {
-      const client = await getClient(tx, tx.clientID);
-      await initCell(tx, { id, color: client?.color ?? "pink" });
-    } else {
-      await deleteCell(tx, id);
-    }
+  if (enabled) {
+    const client = await getClient(tx, tx.clientID);
+    await initCell(tx, { id, color: client?.color ?? "pink" });
+  } else {
+    await deleteCell(tx, id);
   }
 }
 
