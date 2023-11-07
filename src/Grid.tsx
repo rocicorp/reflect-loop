@@ -156,13 +156,6 @@ function Grid({ r }: { r: Reflect<M> }) {
 
   useEffect(() => {
     analyserRef.current.connect(audioContextRef.current.destination);
-
-    const audioContext = new AudioContext();
-    const silentAudioBuffer = audioContext.createBuffer(1, 1, 22050);
-    const silentSource = audioContext.createBufferSource();
-    silentSource.buffer = silentAudioBuffer;
-    silentSource.connect(audioContext.destination);
-    silentSource.start(0);
   }, []);
 
   // This enable audio on click.
@@ -173,9 +166,19 @@ function Grid({ r }: { r: Reflect<M> }) {
         return;
       }
       console.log("resume");
-      audioContextRef.current?.resume().then(() => {
-        if (audioContextRef.current?.state === "running") {
+      const audioContext = audioContextRef.current;
+      if (!audioContext) {
+        return;
+      }
+      audioContext.resume().then(() => {
+        if (audioContext.state === "running") {
           setAudioInitialized(true);
+
+          const silentAudioBuffer = audioContext.createBuffer(1, 1, 22050);
+          const silentSource = audioContext.createBufferSource();
+          silentSource.buffer = silentAudioBuffer;
+          silentSource.connect(audioContext.destination);
+          silentSource.start(0);
           window.removeEventListener("click", handler, false);
         }
       });
