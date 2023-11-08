@@ -3,7 +3,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./App.css";
 import Grid from "./Grid";
-import LoopLogo from "../src/assets/loop-logo.svg?react";
+import LoopsLogo from "../src/assets/loops-logo.svg?react";
 import { Reflect } from "@rocicorp/reflect/client";
 import { M, mutators } from "../reflect/mutators";
 import CursorField from "./CursorField";
@@ -106,7 +106,7 @@ const App: React.FC = () => {
 
   return (
     <div className="App" ref={appRef}>
-      <LoopLogo className="loopLogo" />
+      <LoopsLogo className="loopsLogo" />
       <Grid r={r} />
       {appRect && docRect ? (
         <CursorField r={r} appRect={appRect} docRect={docRect} />
