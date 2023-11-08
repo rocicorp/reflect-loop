@@ -9,6 +9,10 @@
   margin-bottom: 2rem;
 }
 
+.loopsLogo path {
+  animation: colorChange 40s infinite alternate;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -29,6 +33,15 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+@keyframes colorChange {
+  0%{fill:#FC49AB}
+  20%{fill:#5FE8FF}
+  40%{fill:#FF9900}
+  60%{fill:#64FF00}
+  80%{fill:#EB0AFF}
+  100%{fill: #EDC804}
 }
 
 @media (prefers-reduced-motion: no-preference) {
