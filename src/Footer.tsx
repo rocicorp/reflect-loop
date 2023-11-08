@@ -17,7 +17,7 @@ const Footer: React.FC<FooterProps> = ({shareUrl, reflectUrl}) => {
             <CreatedWithReflect className="createdWithReflect" />
         </a>
         <div className="footer-links">
-          <a href={reflectUrl} className="footer-link primary-cta">Share</a>
+          <a href={shareUrl} className="footer-link primary-cta">Share</a>
         </div>
       </div>
     </footer>
