@@ -59,7 +59,7 @@ class SourceNode {
 function Grid({ r }: { r: Reflect<M> }) {
   const selfColor = useSelfColor(r);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
-  const [hoveredID, setHoveredID] = useState<string | null>(null);
+  const [hoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
