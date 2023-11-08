@@ -343,6 +343,7 @@ function Grid({ r }: { r: Reflect<M> }) {
   };
 
   const handleTouchEnd = () => {
+    setHoveredID(null);
     if (longPressTimeoutHandle.current !== undefined) {
       clearTimeout(longPressTimeoutHandle.current);
       longPressTimeoutHandle.current = undefined;
