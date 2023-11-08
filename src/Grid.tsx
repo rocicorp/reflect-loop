@@ -146,44 +146,40 @@ function Grid({ r }: { r: Reflect<M> }) {
   // TODO: Add a play button overload so users know they need to click
   useEffect(() => {
     let audioInitialized = false;
-    let initializingAudio = false;
     const handler = async () => {
-      if (audioInitialized || initializingAudio) {
+      if (audioInitialized) {
         return;
       }
-      try {
-        const audioContext = audioContextRef.current;
-        if (!audioContext) {
-          return;
-        }
-        try {
-          const buffer = audioContext.createBuffer(1, 1, 22050); // 1/10th of a second of silence
-          const source = audioContext.createBufferSource();
-          source.buffer = buffer;
-          source.connect(audioContext.destination);
-          source.start();
-          await audioContext.resume();
-          audioInitialized = true;
-          setAudioInitialized(true);
-          removeEventListeners();
-        } catch (e) {
-          console.error("Failed to start audio context", e);
-        }
+      const audioContext = audioContextRef.current;
+      if (!audioContext) {
+        return;
+      }
 
-        const silenceDataURL =
-          "data:audio/mp3;base64,//MkxAAHiAICWABElBeKPL/RANb2w+yiT1g/gTok//lP/W/l3h8QO/OCdCqCW2Cw//MkxAQHkAIWUAhEmAQXWUOFW2dxPu//9mr60ElY5sseQ+xxesmHKtZr7bsqqX2L//MkxAgFwAYiQAhEAC2hq22d3///9FTV6tA36JdgBJoOGgc+7qvqej5Zu7/7uI9l//MkxBQHAAYi8AhEAO193vt9KGOq+6qcT7hhfN5FTInmwk8RkqKImTM55pRQHQSq//MkxBsGkgoIAABHhTACIJLf99nVI///yuW1uBqWfEu7CgNPWGpUadBmZ////4sL//MkxCMHMAH9iABEmAsKioqKigsLCwtVTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVV//MkxCkECAUYCAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
-        const tag = document.createElement("audio");
-        tag.controls = false;
-        tag.preload = "auto";
-        tag.loop = true;
-        tag.src = silenceDataURL;
-        try {
-          await tag.play();
-        } catch (e) {
-          console.error("Failed to start audio tag", e);
-        }
-      } finally {
-        initializingAudio = false;
+      const buffer = audioContext.createBuffer(1, 1, 22050); // 1/10th of a second of silence
+      const source = audioContext.createBufferSource();
+      source.buffer = buffer;
+      source.connect(audioContext.destination);
+      source.start();
+
+      const silenceDataURL =
+        "data:audio/mp3;base64,//MkxAAHiAICWABElBeKPL/RANb2w+yiT1g/gTok//lP/W/l3h8QO/OCdCqCW2Cw//MkxAQHkAIWUAhEmAQXWUOFW2dxPu//9mr60ElY5sseQ+xxesmHKtZr7bsqqX2L//MkxAgFwAYiQAhEAC2hq22d3///9FTV6tA36JdgBJoOGgc+7qvqej5Zu7/7uI9l//MkxBQHAAYi8AhEAO193vt9KGOq+6qcT7hhfN5FTInmwk8RkqKImTM55pRQHQSq//MkxBsGkgoIAABHhTACIJLf99nVI///yuW1uBqWfEu7CgNPWGpUadBmZ////4sL//MkxCMHMAH9iABEmAsKioqKigsLCwtVTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVV//MkxCkECAUYCAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+      const tag = document.createElement("audio");
+      tag.controls = false;
+      tag.preload = "auto";
+      tag.loop = true;
+      tag.src = silenceDataURL;
+      try {
+        await tag.play();
+      } catch (e) {
+        console.error("Failed to start audio tag", e);
+      }
+      try {
+        await audioContext.resume();
+        audioInitialized = true;
+        setAudioInitialized(true);
+        removeEventListeners();
+      } catch (e) {
+        console.error("Failed to start audio context", e);
       }
     };
     const removeEventListeners = () => {
