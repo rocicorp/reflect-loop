@@ -382,10 +382,10 @@ function Grid({ r }: { r: Reflect<M> }) {
                   : {}
               }
               onMouseOver={() => {
-                //setHoveredID(id);
+                setHoveredID(id);
               }}
               onMouseOut={() => {
-                //setHoveredID((existing) => (existing === id ? null : existing));
+                setHoveredID((existing) => (existing === id ? null : existing));
               }}
               onTouchStart={() => handleTouchStart(id)}
               onTouchEnd={handleTouchEnd}
