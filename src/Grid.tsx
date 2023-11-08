@@ -142,6 +142,43 @@ function Grid({ r }: { r: Reflect<M> }) {
     analyserRef.current.connect(audioContextRef.current.destination);
   }, []);
 
+  const initAudio = async () => {
+    if (audioInitialized) {
+      return;
+    }
+    const audioContext = audioContextRef.current;
+    if (!audioContext) {
+      return;
+    }
+
+    const buffer = audioContext.createBuffer(1, 1, 22050); // 1/10th of a second of silence
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start();
+
+    const silenceDataURL =
+      "data:audio/mp3;base64,//MkxAAHiAICWABElBeKPL/RANb2w+yiT1g/gTok//lP/W/l3h8QO/OCdCqCW2Cw//MkxAQHkAIWUAhEmAQXWUOFW2dxPu//9mr60ElY5sseQ+xxesmHKtZr7bsqqX2L//MkxAgFwAYiQAhEAC2hq22d3///9FTV6tA36JdgBJoOGgc+7qvqej5Zu7/7uI9l//MkxBQHAAYi8AhEAO193vt9KGOq+6qcT7hhfN5FTInmwk8RkqKImTM55pRQHQSq//MkxBsGkgoIAABHhTACIJLf99nVI///yuW1uBqWfEu7CgNPWGpUadBmZ////4sL//MkxCMHMAH9iABEmAsKioqKigsLCwtVTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVV//MkxCkECAUYCAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+    const tag = document.createElement("audio");
+    tag.controls = false;
+    tag.preload = "auto";
+    tag.loop = true;
+    tag.src = silenceDataURL;
+    try {
+      await tag.play();
+    } catch (e) {
+      console.error("Failed to start audio tag", e);
+    }
+    try {
+      await audioContext.resume();
+      //audioInitialized = true;
+      setAudioInitialized(true);
+      //removeEventListeners();
+    } catch (e) {
+      console.error("Failed to start audio context", e);
+    }
+  };
+
   // This enable audio on click.
   // TODO: Add a play button overload so users know they need to click
   useEffect(() => {
@@ -183,13 +220,19 @@ function Grid({ r }: { r: Reflect<M> }) {
       }
     };
     const removeEventListeners = () => {
-      window.removeEventListener("mousedown", handler, false);
+      window.removeEventListener("touchstart", handler, false);
+      window.document.documentElement.removeEventListener(
+        "click",
+        handler,
+        false
+      );
     };
     window.document.documentElement.addEventListener(
-      "mousedown",
+      "touchstart",
       handler,
       false
     );
+    window.document.documentElement.addEventListener("click", handler, false);
     return removeEventListeners;
   }, []);
 
@@ -337,6 +380,7 @@ function Grid({ r }: { r: Reflect<M> }) {
 
   const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
   const handleTouchStart = (id: string) => {
+    initAudio();
     if (longPressTimeoutHandle.current === undefined) {
       longPressTimeoutHandle.current = setTimeout(() => {
         setHoveredID(id);
