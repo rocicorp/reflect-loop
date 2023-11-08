@@ -288,11 +288,8 @@ function Grid({ r }: { r: Reflect<M> }) {
     // loop through each row
     // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
     // else if there is a delete just stop it
-
     const audioCtx = audioContextRef.current;
     for (let y = 0; y < gridSize; y++) {
-      const adds: string[] = [];
-      const dels: string[] = [];
       for (let x = 0; x < gridSize; x++) {
         const id = coordsToID(x, y);
         const source = sources.current[id];
@@ -300,37 +297,42 @@ function Grid({ r }: { r: Reflect<M> }) {
         const shouldBeActive = id === hoveredID || id in enabledCells;
         const added = shouldBeActive && !active;
         const deleted = active && !shouldBeActive;
+        const activeTargetGain =
+          hoveredID === null ? 1 : id === hoveredID ? 1 : 0.4;
+        if (active) {
+          console.log("setting active to", id, activeTargetGain);
+          source.gain.setTargetAtTime(
+            activeTargetGain,
+            audioCtx.currentTime,
+            0.2
+          );
+        }
         if (added) {
-          adds.push(id);
+          const source = new SourceNode(
+            audioCtx,
+            audioBuffers[parseInt(id) % audioBuffers.length],
+            analyserRef.current
+          );
+          const gain = source.gain;
+
+          // connect the AudioBufferSourceNode to the gainNode
+          // and the gainNode to the destination
+          gain.setValueAtTime(0, 0);
+          console.log("setting added", id, activeTargetGain);
+          gain.setTargetAtTime(activeTargetGain, audioCtx.currentTime, 0.2);
+          source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
+
+          sources.current[id] = source;
         }
         if (deleted) {
-          dels.push(id);
+          const source = sources.current[id];
+          source.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
+          source.stop(audioCtx.currentTime + 1);
+          setTimeout(() => {
+            source.disconnect();
+          }, 5000);
+          delete sources.current[id];
         }
-      }
-      for (const id of adds) {
-        const source = new SourceNode(
-          audioCtx,
-          audioBuffers[parseInt(id) % audioBuffers.length],
-          analyserRef.current
-        );
-        const gain = source.gain;
-
-        // connect the AudioBufferSourceNode to the gainNode
-        // and the gainNode to the destination
-        gain.setValueAtTime(0, 0);
-        gain.setTargetAtTime(1, audioCtx.currentTime, 0.2);
-        source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
-
-        sources.current[id] = source;
-      }
-      for (const id of dels) {
-        const source = sources.current[id];
-        source.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
-        source.stop(audioCtx.currentTime + 1);
-        setTimeout(() => {
-          source.disconnect();
-        }, 5000);
-        delete sources.current[id];
       }
     }
   }, [audioBuffers, enabledCells, sources, hoveredID]);
