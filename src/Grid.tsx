@@ -405,13 +405,10 @@ function Grid({ r }: { r: Reflect<M> }) {
               onTouchStart={() => handleTouchStart(id)}
               onTouchEnd={handleTouchEnd}
               onClick={() => {
-                setTimeout(() => {
-                  r.mutate.setCellEnabled({
-                    id,
-                    enabled: !(id in enabledCells),
-                  });
-                  setHoveredID(null);
-                }, 100);
+                r.mutate.setCellEnabled({
+                  id,
+                  enabled: !(id in enabledCells),
+                });
               }}
             >
               <div
