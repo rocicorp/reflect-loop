@@ -180,11 +180,14 @@ function Grid({ r }: { r: Reflect<M> }) {
       }
     };
     const removeEventListeners = () => {
-      window.document.removeEventListener("touchstart", handler, false);
-      window.document.removeEventListener("click", handler, false);
+      window.document.documentElement.removeEventListener(
+        "touchstart",
+        handler
+      );
+      window.document.documentElement.removeEventListener("click", handler);
     };
-    window.document.addEventListener("touchstart", handler, false);
-    window.document.addEventListener("click", handler, false);
+    window.document.documentElement.addEventListener("touchstart", handler);
+    window.document.documentElement.addEventListener("click", handler);
     return removeEventListeners;
   }, []);
 
