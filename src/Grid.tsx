@@ -152,6 +152,24 @@ function Grid({ r }: { r: Reflect<M> }) {
         return;
       }
       try {
+        const audioContext = audioContextRef.current;
+        if (!audioContext) {
+          return;
+        }
+        try {
+          const buffer = audioContext.createBuffer(1, 1, 22050); // 1/10th of a second of silence
+          const source = audioContext.createBufferSource();
+          source.buffer = buffer;
+          source.connect(audioContext.destination);
+          source.start();
+          await audioContext.resume();
+          audioInitialized = true;
+          setAudioInitialized(true);
+          removeEventListeners();
+        } catch (e) {
+          console.error("Failed to start audio context", e);
+        }
+
         const silenceDataURL =
           "data:audio/mp3;base64,//MkxAAHiAICWABElBeKPL/RANb2w+yiT1g/gTok//lP/W/l3h8QO/OCdCqCW2Cw//MkxAQHkAIWUAhEmAQXWUOFW2dxPu//9mr60ElY5sseQ+xxesmHKtZr7bsqqX2L//MkxAgFwAYiQAhEAC2hq22d3///9FTV6tA36JdgBJoOGgc+7qvqej5Zu7/7uI9l//MkxBQHAAYi8AhEAO193vt9KGOq+6qcT7hhfN5FTInmwk8RkqKImTM55pRQHQSq//MkxBsGkgoIAABHhTACIJLf99nVI///yuW1uBqWfEu7CgNPWGpUadBmZ////4sL//MkxCMHMAH9iABEmAsKioqKigsLCwtVTEFNRTMuOTkuNVVVVVVVVVVVVVVVVVVV//MkxCkECAUYCAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
         const tag = document.createElement("audio");
@@ -164,27 +182,24 @@ function Grid({ r }: { r: Reflect<M> }) {
         } catch (e) {
           console.error("Failed to start audio tag", e);
         }
-        if (!audioContextRef.current) {
-          return;
-        }
-        try {
-          await audioContextRef.current.resume();
-          audioInitialized = true;
-          setAudioInitialized(true);
-          removeEventListeners();
-        } catch (e) {
-          console.error("Failed to start audio context", e);
-        }
       } finally {
         initializingAudio = false;
       }
     };
     const removeEventListeners = () => {
-      window.removeEventListener("touchend", handler, false);
-      window.removeEventListener("click", handler, false);
+      window.removeEventListener("touchstart", handler, false);
+      window.document.documentElement.removeEventListener(
+        "click",
+        handler,
+        false
+      );
     };
-    window.addEventListener("touchend", handler, false);
-    window.addEventListener("click", handler, false);
+    window.document.documentElement.addEventListener(
+      "touchstart",
+      handler,
+      false
+    );
+    window.document.documentElement.addEventListener("click", handler, false);
     return removeEventListeners;
   }, []);
 
@@ -293,7 +308,6 @@ function Grid({ r }: { r: Reflect<M> }) {
         const source = sources.current[id];
         const active = source && source.playing;
         const shouldBeActive = id === hoveredID || id in enabledCells;
-        console.log(id, active, shouldBeActive);
         const added = shouldBeActive && !active;
         const deleted = active && !shouldBeActive;
         if (added) {
@@ -304,7 +318,6 @@ function Grid({ r }: { r: Reflect<M> }) {
         }
       }
       for (const id of adds) {
-        console.log("add", id);
         const source = new SourceNode(
           audioCtx,
           audioBuffers[parseInt(id) % audioBuffers.length],
@@ -321,7 +334,6 @@ function Grid({ r }: { r: Reflect<M> }) {
         sources.current[id] = source;
       }
       for (const id of dels) {
-        console.log("dell", id);
         const source = sources.current[id];
         source.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
         source.stop(audioCtx.currentTime + 1);
@@ -365,7 +377,6 @@ function Grid({ r }: { r: Reflect<M> }) {
     setHoveredID((existing) => (existing === id ? null : existing));
   };
 
-  console.log("Grid");
   return (
     <div>
       <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
