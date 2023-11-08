@@ -59,7 +59,7 @@ class SourceNode {
 function Grid({ r }: { r: Reflect<M> }) {
   const selfColor = useSelfColor(r);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
-  const [hoveredID] = useState<string | null>(null);
+  const [hoveredID, setHoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -335,40 +335,36 @@ function Grid({ r }: { r: Reflect<M> }) {
     }
   }, [audioBuffers, enabledCells, sources, hoveredID]);
 
-  //const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
+  const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
   const handleTouchStart = (id: string) => {
-    console.log(id);
-    // if (longPressTimeoutHandle.current === undefined) {
-    //   longPressTimeoutHandle.current = setTimeout(() => {
-    //     setHoveredID(id);
-    //     longPressTimeoutHandle.current = undefined;
-    //   }, 300);
-    // }
+    if (longPressTimeoutHandle.current === undefined) {
+      longPressTimeoutHandle.current = setTimeout(() => {
+        setHoveredID(id);
+        longPressTimeoutHandle.current = undefined;
+      }, 300);
+    }
   };
 
   const handleTouchEnd = () => {
-    // setHoveredID(null);
-    // if (longPressTimeoutHandle.current !== undefined) {
-    //   clearTimeout(longPressTimeoutHandle.current);
-    //   longPressTimeoutHandle.current = undefined;
-    // }
+    setHoveredID(null);
+    if (longPressTimeoutHandle.current !== undefined) {
+      clearTimeout(longPressTimeoutHandle.current);
+      longPressTimeoutHandle.current = undefined;
+    }
   };
 
   const handlePointerOver = (e: PointerEvent<HTMLDivElement>, id: string) => {
     if (e.pointerType === "touch") {
       return;
     }
-    console.log(id);
-    //setHoveredID(id);
+    setHoveredID(id);
   };
 
   const handlePointerOut = (e: PointerEvent<HTMLDivElement>, id: string) => {
     if (e.pointerType === "touch") {
       return;
     }
-
-    console.log(id);
-    //setHoveredID((existing) => (existing === id ? null : existing));
+    setHoveredID((existing) => (existing === id ? null : existing));
   };
 
   return (
