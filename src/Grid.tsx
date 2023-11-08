@@ -398,7 +398,7 @@ function Grid({ r }: { r: Reflect<M> }) {
               onPointerOver={(e) => {
                 handlePointerOver(e, id);
               }}
-              onPointerOut={() => {
+              onPointerOut={(e) => {
                 handlePointerOut(e, id);
               }}
               onTouchStart={() => handleTouchStart(id)}
