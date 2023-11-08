@@ -298,7 +298,7 @@ function Grid({ r }: { r: Reflect<M> }) {
         const added = shouldBeActive && !active;
         const deleted = active && !shouldBeActive;
         const activeTargetGain =
-          hoveredID === null ? 1 : id === hoveredID ? 1 : 0.4;
+          hoveredID === null ? 1 : id === hoveredID ? 1 : 0.5;
         if (active) {
           console.log("setting active to", id, activeTargetGain);
           source.gain.setTargetAtTime(
