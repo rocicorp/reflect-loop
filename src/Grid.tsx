@@ -183,19 +183,13 @@ function Grid({ r }: { r: Reflect<M> }) {
       }
     };
     const removeEventListeners = () => {
-      window.removeEventListener("touchstart", handler, false);
-      window.document.documentElement.removeEventListener(
-        "click",
-        handler,
-        false
-      );
+      window.removeEventListener("mousedown", handler, false);
     };
     window.document.documentElement.addEventListener(
-      "touchstart",
+      "mousedown",
       handler,
       false
     );
-    window.document.documentElement.addEventListener("click", handler, false);
     return removeEventListeners;
   }, []);
 
