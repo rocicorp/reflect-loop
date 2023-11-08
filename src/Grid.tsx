@@ -335,36 +335,40 @@ function Grid({ r }: { r: Reflect<M> }) {
     }
   }, [audioBuffers, enabledCells, sources, hoveredID]);
 
-  const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
+  //const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
   const handleTouchStart = (id: string) => {
-    if (longPressTimeoutHandle.current === undefined) {
-      longPressTimeoutHandle.current = setTimeout(() => {
-        setHoveredID(id);
-        longPressTimeoutHandle.current = undefined;
-      }, 300);
-    }
+    console.log(id);
+    // if (longPressTimeoutHandle.current === undefined) {
+    //   longPressTimeoutHandle.current = setTimeout(() => {
+    //     setHoveredID(id);
+    //     longPressTimeoutHandle.current = undefined;
+    //   }, 300);
+    // }
   };
 
   const handleTouchEnd = () => {
-    setHoveredID(null);
-    if (longPressTimeoutHandle.current !== undefined) {
-      clearTimeout(longPressTimeoutHandle.current);
-      longPressTimeoutHandle.current = undefined;
-    }
+    // setHoveredID(null);
+    // if (longPressTimeoutHandle.current !== undefined) {
+    //   clearTimeout(longPressTimeoutHandle.current);
+    //   longPressTimeoutHandle.current = undefined;
+    // }
   };
 
   const handlePointerOver = (e: PointerEvent<HTMLDivElement>, id: string) => {
     if (e.pointerType === "touch") {
       return;
     }
-    setHoveredID(id);
+    console.log(id);
+    //setHoveredID(id);
   };
 
   const handlePointerOut = (e: PointerEvent<HTMLDivElement>, id: string) => {
     if (e.pointerType === "touch") {
       return;
     }
-    setHoveredID((existing) => (existing === id ? null : existing));
+
+    console.log(id);
+    //setHoveredID((existing) => (existing === id ? null : existing));
   };
 
   return (
@@ -405,11 +409,10 @@ function Grid({ r }: { r: Reflect<M> }) {
               onTouchStart={() => handleTouchStart(id)}
               onTouchEnd={handleTouchEnd}
               onClick={() => {
-                handleTouchStart(id);
-                // r.mutate.setCellEnabled({
-                //   id,
-                //   enabled: !(id in enabledCells),
-                // });
+                r.mutate.setCellEnabled({
+                  id,
+                  enabled: !(id in enabledCells),
+                });
               }}
             >
               <div
