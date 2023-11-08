@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, PointerEvent } from "react";
 import "./Grid.css";
 import {
   coordsToID,
@@ -351,14 +351,17 @@ function Grid({ r }: { r: Reflect<M> }) {
     }
   };
 
-  const handleMouseOver = (id: string) => {
-    if (longPressTimeoutHandle.current !== undefined) {
+  const handlePointerOver = (e: PointerEvent<HTMLDivElement>, id: string) => {
+    if (e.pointerType === "touch") {
       return;
     }
     setHoveredID(id);
   };
 
-  const handleMouseOut = (id: string) => {
+  const handlePointerOut = (e: PointerEvent<HTMLDivElement>, id: string) => {
+    if (e.pointerType === "touch") {
+      return;
+    }
     setHoveredID((existing) => (existing === id ? null : existing));
   };
 
@@ -392,11 +395,11 @@ function Grid({ r }: { r: Reflect<M> }) {
                   ? { backgroundColor: enabledCells[id].color }
                   : {}
               }
-              onMouseOver={() => {
-                handleMouseOver(id);
+              onPointerOver={(e) => {
+                handlePointerOver(e, id);
               }}
-              onMouseOut={() => {
-                handleMouseOut(id);
+              onPointerOut={() => {
+                handlePointerOut(e, id);
               }}
               onTouchStart={() => handleTouchStart(id)}
               onTouchEnd={handleTouchEnd}
