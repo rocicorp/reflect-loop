@@ -10,6 +10,8 @@ import {
 } from "./coordinates.js";
 import { displayStringForLocation } from "./location.js";
 import { Client } from "../reflect/model/client.js";
+import { ClientID } from "@rocicorp/reflect";
+import classNames from "classnames";
 
 export default function CursorField({
   r,
@@ -41,6 +43,7 @@ export default function CursorField({
     <>
       {presentClients.map((client) => (
         <Cursor
+          selfClientID={r.clientID}
           client={client}
           key={client.id}
           appRect={appRect}
@@ -52,10 +55,12 @@ export default function CursorField({
 }
 
 function Cursor({
+  selfClientID,
   client,
   appRect,
   docRect,
 }: {
+  selfClientID: ClientID;
   client: Client;
   appRect: Rect;
   docRect: Rect;
@@ -66,7 +71,9 @@ function Cursor({
   const cursorCoordinates = coordinateToPosition(cursor, appRect, docRect);
   return (
     <div
-      className="cursor"
+      className={classNames("cursor", {
+        "cursor-self": client.id === selfClientID,
+      })}
       style={{
         transform: `translate3d(${cursorCoordinates.x}px, ${cursorCoordinates.y}px, 0)`,
       }}

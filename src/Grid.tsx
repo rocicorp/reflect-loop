@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, PointerEvent } from "react";
 import "./Grid.css";
 import {
   coordsToID,
@@ -12,63 +12,47 @@ import { Reflect } from "@rocicorp/reflect/client";
 import { M } from "../reflect/mutators.js";
 import { useSelfColor } from "../reflect/subscriptions.js";
 import PresenceBar from "./PresenceBar.js";
+import classNames from "classnames";
 
-enum SourceState {
-  Unqueued = -1,
-  Queued = 0,
-  Playing = 1,
-  Stopping = 2,
-  Stopped = 3,
-}
+class SourceNode {
+  #audioBufferSourceNode: AudioBufferSourceNode;
+  #gainNode: GainNode;
+  #playing: boolean = false;
 
-class SourceNode extends AudioBufferSourceNode {
-  #timerID: number | null = null;
-  #state: SourceState;
-  gainNode: GainNode;
-
-  constructor(context: AudioContext, buffer: AudioBuffer, gainNode: GainNode) {
-    super(context, { buffer });
-    this.#state = SourceState.Unqueued;
-    this.gainNode = gainNode;
+  constructor(
+    context: AudioContext,
+    buffer: AudioBuffer,
+    destination: AudioNode
+  ) {
+    this.#audioBufferSourceNode = context.createBufferSource();
+    this.#audioBufferSourceNode.buffer = buffer;
+    this.#audioBufferSourceNode.loop = true;
+    this.#gainNode = context.createGain();
+    this.#audioBufferSourceNode.connect(this.#gainNode);
+    this.#gainNode.connect(destination);
   }
 
-  get state() {
-    return this.#state;
+  get playing() {
+    return this.#playing;
+  }
+
+  get gain() {
+    return this.#gainNode.gain;
   }
 
   start(when?: number, offset?: number) {
-    if (this.#state !== SourceState.Unqueued) {
-      throw new Error("Cannot start already started node");
-    }
-
-    this.#state = SourceState.Queued;
-    super.start(when, offset);
-
-    const delta = when ? when - this.context.currentTime : 0;
-    this.#timerID = window.setTimeout(() => {
-      this.#state = SourceState.Playing;
-    }, delta * 1000);
+    this.#playing = true;
+    this.#audioBufferSourceNode.start(when, offset);
   }
 
   stop(when?: number) {
-    if (
-      this.#state !== SourceState.Queued &&
-      this.#state !== SourceState.Playing
-    ) {
-      throw new Error("Cannot stop unqueued or stopped node");
-    }
+    this.#playing = false;
+    this.#audioBufferSourceNode.stop(when);
+  }
 
-    if (this.#timerID !== null) {
-      window.clearTimeout(this.#timerID);
-      this.#timerID = null;
-    }
-
-    this.#state = SourceState.Stopping;
-    super.stop(when);
-    const delta = when ? when - this.context.currentTime : 0;
-    this.#timerID = window.setTimeout(() => {
-      this.#state = SourceState.Stopped;
-    }, delta * 1000);
+  disconnect() {
+    this.#gainNode.disconnect();
+    this.#audioBufferSourceNode.disconnect();
   }
 }
 
@@ -307,9 +291,9 @@ function Grid({ r }: { r: Reflect<M> }) {
       for (let x = 0; x < gridSize; x++) {
         const id = coordsToID(x, y);
         const source = sources.current[id];
-        const active = source && source.state == SourceState.Playing;
-        const shouldBeActive = id === hoveredID || id in enabledCells; /*&&
-            (hoveredCoords === null || hoveredCoords[1] !== y)*/
+        const active = source && source.playing;
+        const shouldBeActive = id === hoveredID || id in enabledCells;
+        console.log(id, active, shouldBeActive);
         const added = shouldBeActive && !active;
         const deleted = active && !shouldBeActive;
         if (added) {
@@ -324,25 +308,22 @@ function Grid({ r }: { r: Reflect<M> }) {
         const source = new SourceNode(
           audioCtx,
           audioBuffers[parseInt(id) % audioBuffers.length],
-          audioCtx.createGain()
+          analyserRef.current
         );
-        source.loop = true;
-        const gainNode = source.gainNode;
+        const gain = source.gain;
 
         // connect the AudioBufferSourceNode to the gainNode
         // and the gainNode to the destination
-        gainNode.gain.setValueAtTime(0, 0);
-        gainNode.gain.setTargetAtTime(1, audioCtx.currentTime, 0.2);
-        source.connect(gainNode);
-        gainNode.connect(analyserRef.current);
+        gain.setValueAtTime(0, 0);
+        gain.setTargetAtTime(1, audioCtx.currentTime, 0.2);
         source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
 
         sources.current[id] = source;
       }
       for (const id of dels) {
-        console.log("del", id);
+        console.log("dell", id);
         const source = sources.current[id];
-        source.gainNode.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
+        source.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
         source.stop(audioCtx.currentTime + 1);
         setTimeout(() => {
           source.disconnect();
@@ -351,6 +332,38 @@ function Grid({ r }: { r: Reflect<M> }) {
       }
     }
   }, [audioBuffers, enabledCells, sources, hoveredID]);
+
+  const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
+  const handleTouchStart = (id: string) => {
+    if (longPressTimeoutHandle.current === undefined) {
+      longPressTimeoutHandle.current = setTimeout(() => {
+        setHoveredID(id);
+        longPressTimeoutHandle.current = undefined;
+      }, 300);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setHoveredID(null);
+    if (longPressTimeoutHandle.current !== undefined) {
+      clearTimeout(longPressTimeoutHandle.current);
+      longPressTimeoutHandle.current = undefined;
+    }
+  };
+
+  const handlePointerOver = (e: PointerEvent<HTMLDivElement>, id: string) => {
+    if (e.pointerType === "touch") {
+      return;
+    }
+    setHoveredID(id);
+  };
+
+  const handlePointerOut = (e: PointerEvent<HTMLDivElement>, id: string) => {
+    if (e.pointerType === "touch") {
+      return;
+    }
+    setHoveredID((existing) => (existing === id ? null : existing));
+  };
 
   console.log("Grid");
   return (
@@ -374,24 +387,29 @@ function Grid({ r }: { r: Reflect<M> }) {
             <div
               key={id}
               id={id}
-              className="cell"
+              className={classNames("cell", {
+                "cell-hovered": id === hoveredID,
+              })}
               style={
                 enabledCells[id]
                   ? { backgroundColor: enabledCells[id].color }
                   : {}
               }
-              onMouseOver={() => {
-                setHoveredID(id);
+              onPointerOver={(e) => {
+                handlePointerOver(e, id);
               }}
-              onMouseOut={() => {
-                setHoveredID((existing) => (existing === id ? null : existing));
+              onPointerOut={(e) => {
+                handlePointerOut(e, id);
               }}
-              onMouseDown={() =>
+              onTouchStart={() => handleTouchStart(id)}
+              onTouchEnd={handleTouchEnd}
+              onClick={() => {
                 r.mutate.setCellEnabled({
                   id,
                   enabled: !(id in enabledCells),
-                })
-              }
+                });
+                setHoveredID(null);
+              }}
             >
               <div
                 className="cellHighlight"

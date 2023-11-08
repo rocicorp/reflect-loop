@@ -6,13 +6,13 @@
 }
 
 .presenceAvatar {
-  padding: 0.8125rem;
   text-align: center;
-  line-height: 1rem;
+  text-align: -webkit-center;
+  line-height: 2rem;
   border: 3px solid #fc49ab;
   border-radius: 50%;
-  height: 1rem;
-  width: 1rem;
+  height: 2rem;
+  width: 2rem;
   display: inline-block;
   margin-right: 0.5rem;
 }
