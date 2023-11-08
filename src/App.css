@@ -5,11 +5,11 @@
   text-align: center;
 }
 
-.loopsLogo {
+.loopLogo {
   margin-bottom: 2rem;
 }
 
-.loopsLogo path {
+.loopLogo path {
   animation: colorChange 40s infinite alternate;
 }
 
