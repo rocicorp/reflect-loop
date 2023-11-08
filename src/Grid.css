@@ -48,6 +48,11 @@
 .cell-hovered > .cellHighlight {
   opacity: 0.7;
 }
+@media (hover: none) {
+  .cell-hovered > .cellHighlight {
+    transform: scale(2);
+  }
+}
 
 .cell.queued {
   animation: pulse 1.5s infinite;
@@ -58,22 +63,6 @@
   margin: 20px auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-}
-
-/* Animations */
-@keyframes pulse {
-  0% {
-    background-color: #fc208a;
-    opacity: 0.5;
-  }
-  50% {
-    background-color: #fc208a;
-    opacity: 0.75;
-  }
-  100% {
-    background-color: #fc208a;
-    opacity: 0.5;
-  }
 }
 
 /* Responsive 📱 */
