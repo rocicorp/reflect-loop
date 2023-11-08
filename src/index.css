@@ -18,11 +18,16 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  cursor: none;
+  color: #fff;
+  opacity: 0.5;
+  transition: opacity 0.3s;
   text-decoration: inherit;
 }
 a:hover {
-  color: #535bf2;
+  color: #fff;
+  opacity: 1;
+  cursor: none;
 }
 
 html {

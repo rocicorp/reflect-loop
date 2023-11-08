@@ -3,6 +3,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import "./App.css";
 import Grid from "./Grid";
+import Footer from "./Footer";
 import LoopsLogo from "../src/assets/loops-logo.svg?react";
 import { Reflect } from "@rocicorp/reflect/client";
 import { M, mutators } from "../reflect/mutators";
@@ -108,6 +109,7 @@ const App: React.FC = () => {
     <div className="App" ref={appRef}>
       <LoopsLogo className="loopsLogo" />
       <Grid r={r} />
+      <Footer shareUrl="https://reflect.net" reflectUrl="https://reflect.net" />
       {appRect && docRect ? (
         <CursorField r={r} appRect={appRect} docRect={docRect} />
       ) : null}
