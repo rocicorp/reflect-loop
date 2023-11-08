@@ -389,12 +389,13 @@ function Grid({ r }: { r: Reflect<M> }) {
               }}
               onTouchStart={() => handleTouchStart(id)}
               onTouchEnd={handleTouchEnd}
-              onClick={() =>
+              onClick={() => {
                 r.mutate.setCellEnabled({
                   id,
                   enabled: !(id in enabledCells),
-                })
-              }
+                });
+                setHoveredID(null);
+              }}
             >
               <div
                 className="cellHighlight"
