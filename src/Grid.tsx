@@ -12,6 +12,7 @@ import { Reflect } from "@rocicorp/reflect/client";
 import { M } from "../reflect/mutators.js";
 import { useSelfColor } from "../reflect/subscriptions.js";
 import PresenceBar from "./PresenceBar.js";
+import classNames from "classnames";
 
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
@@ -372,7 +373,9 @@ function Grid({ r }: { r: Reflect<M> }) {
             <div
               key={id}
               id={id}
-              className="cell"
+              className={classNames("cell", {
+                "cell-hovered": id === hoveredID,
+              })}
               style={
                 enabledCells[id]
                   ? { backgroundColor: enabledCells[id].color }
