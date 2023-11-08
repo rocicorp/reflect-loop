@@ -339,7 +339,7 @@ function Grid({ r }: { r: Reflect<M> }) {
       longPressTimeoutHandle.current = setTimeout(() => {
         setHoveredID(id);
         longPressTimeoutHandle.current = undefined;
-      }, 200);
+      }, 300);
     }
   };
 
@@ -382,10 +382,10 @@ function Grid({ r }: { r: Reflect<M> }) {
                   : {}
               }
               onMouseOver={() => {
-                setHoveredID(id);
+                //setHoveredID(id);
               }}
               onMouseOut={() => {
-                setHoveredID((existing) => (existing === id ? null : existing));
+                //setHoveredID((existing) => (existing === id ? null : existing));
               }}
               onTouchStart={() => handleTouchStart(id)}
               onTouchEnd={handleTouchEnd}
