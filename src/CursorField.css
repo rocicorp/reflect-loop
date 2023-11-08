@@ -5,11 +5,11 @@
   left: 0px;
   transform: translate3d(0, 0, 0);
   z-index: 300;
-  opacity: 1;
-}
 
-.cursor.local.cursor {
-  z-index: 301;
+@media (hover: none) {
+  .cursor-self {
+    display: none;
+  }
 }
 
 .cursor svg {
