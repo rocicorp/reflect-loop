@@ -2,6 +2,7 @@ import { generate } from "@rocicorp/rails";
 import * as v from "@badrap/valita";
 import { WriteTransaction } from "@rocicorp/reflect";
 import { getClient } from "./client";
+import { randomColorID } from "./colors";
 
 export const gridSize = 8;
 export const numCells = gridSize * gridSize;
@@ -31,7 +32,7 @@ export async function setCellEnabled(
 ) {
   if (enabled) {
     const client = await getClient(tx, tx.clientID);
-    await initCell(tx, { id, color: client?.color ?? "pink" });
+    await initCell(tx, { id, color: client?.color ?? randomColorID() });
   } else {
     await deleteCell(tx, id);
   }

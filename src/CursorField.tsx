@@ -1,6 +1,6 @@
+import "./CursorField.css";
 import { Reflect } from "@rocicorp/reflect/client";
 import { useEffect } from "react";
-import "./CursorField.css";
 import { M } from "../reflect/mutators.js";
 import { usePresentClients } from "../reflect/subscriptions.js";
 import {
@@ -12,6 +12,7 @@ import { displayStringForLocation } from "./location.js";
 import { Client } from "../reflect/model/client.js";
 import { ClientID } from "@rocicorp/reflect";
 import classNames from "classnames";
+import { colorStringForColorID } from "../reflect/model/colors.js";
 
 export default function CursorField({
   r,
@@ -68,6 +69,8 @@ function Cursor({
   const { cursor, color, location } = client;
 
   if (!cursor) return null;
+
+  const colorString = colorStringForColorID(color);
   const cursorCoordinates = coordinateToPosition(cursor, appRect, docRect);
   return (
     <div
@@ -88,7 +91,7 @@ function Cursor({
           height="22px"
         >
           <path
-            fill={color}
+            fill={colorString}
             stroke="#fff"
             d="M6.5,16.7l-3.3-16l14.2,8.2L10.5,11c-0.2,0.1-0.4,0.2-0.5,0.4L6.5,16.7z"
           />
@@ -97,7 +100,7 @@ function Cursor({
       <div
         className="location"
         style={{
-          backgroundColor: color,
+          backgroundColor: colorString,
         }}
       >
         <div className="location-name">
