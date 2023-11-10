@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, PointerEvent } from "react";
 import "./Grid.css";
+import { useEffect, useRef, useState, PointerEvent } from "react";
 import {
+  Cell,
   coordsToID,
   gridSize,
   indexToID,
@@ -13,6 +14,7 @@ import { M } from "../reflect/mutators.js";
 import { useSelfColor } from "../reflect/subscriptions.js";
 import PresenceBar from "./PresenceBar.js";
 import classNames from "classnames";
+import { colorStringForColorID } from "../reflect/model/colors.js";
 
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
@@ -56,7 +58,13 @@ class SourceNode {
   }
 }
 
-function Grid({ r }: { r: Reflect<M> }) {
+function Grid({
+  r,
+  fixedCells,
+}: {
+  r: Reflect<M> | undefined;
+  fixedCells?: Record<string, Cell> | undefined;
+}) {
   const selfColor = useSelfColor(r);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
@@ -269,7 +277,7 @@ function Grid({ r }: { r: Reflect<M> }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const enabledCells = useSubscribe(
+  const enabledCellsFromSubscribe = useSubscribe(
     r,
     async (tx) => {
       const cells = await listCells(tx);
@@ -277,6 +285,8 @@ function Grid({ r }: { r: Reflect<M> }) {
     },
     {}
   );
+
+  const enabledCells = fixedCells ?? enabledCellsFromSubscribe;
 
   const sources = useRef<Record<string, SourceNode>>({});
 
@@ -300,7 +310,6 @@ function Grid({ r }: { r: Reflect<M> }) {
         const activeTargetGain =
           hoveredID === null ? 1 : id === hoveredID ? 1 : 0.5;
         if (active) {
-          console.log("setting active to", id, activeTargetGain);
           source.gain.setTargetAtTime(
             activeTargetGain,
             audioCtx.currentTime,
@@ -318,7 +327,6 @@ function Grid({ r }: { r: Reflect<M> }) {
           // connect the AudioBufferSourceNode to the gainNode
           // and the gainNode to the destination
           gain.setValueAtTime(0, 0);
-          console.log("setting added", id, activeTargetGain);
           gain.setTargetAtTime(activeTargetGain, audioCtx.currentTime, 0.2);
           source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
 
@@ -338,36 +346,53 @@ function Grid({ r }: { r: Reflect<M> }) {
   }, [audioBuffers, enabledCells, sources, hoveredID]);
 
   const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
-  const handleTouchStart = (id: string) => {
+
+  function callbackIfNotFixed<R>(callback: R): R | null {
+    return fixedCells ? null : callback;
+  }
+
+  const handleTouchStart = callbackIfNotFixed((id: string) => {
     if (longPressTimeoutHandle.current === undefined) {
       longPressTimeoutHandle.current = setTimeout(() => {
         setHoveredID(id);
         longPressTimeoutHandle.current = undefined;
       }, 300);
     }
-  };
+  });
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = callbackIfNotFixed(() => {
     setHoveredID(null);
     if (longPressTimeoutHandle.current !== undefined) {
       clearTimeout(longPressTimeoutHandle.current);
       longPressTimeoutHandle.current = undefined;
     }
-  };
+  });
 
-  const handlePointerOver = (e: PointerEvent<HTMLDivElement>, id: string) => {
-    if (e.pointerType === "touch") {
-      return;
+  const handlePointerOver = callbackIfNotFixed(
+    (e: PointerEvent<HTMLDivElement>, id: string) => {
+      if (e.pointerType === "touch") {
+        return;
+      }
+      setHoveredID(id);
     }
-    setHoveredID(id);
-  };
+  );
 
-  const handlePointerOut = (e: PointerEvent<HTMLDivElement>, id: string) => {
-    if (e.pointerType === "touch") {
-      return;
+  const handlePointerOut = callbackIfNotFixed(
+    (e: PointerEvent<HTMLDivElement>, id: string) => {
+      if (e.pointerType === "touch") {
+        return;
+      }
+      setHoveredID((existing) => (existing === id ? null : existing));
     }
-    setHoveredID((existing) => (existing === id ? null : existing));
-  };
+  );
+
+  const handleClick = callbackIfNotFixed((id: string) => {
+    setHoveredID(null);
+    r?.mutate.setCellEnabled({
+      id,
+      enabled: !(id in enabledCells),
+    });
+  });
 
   return (
     <div>
@@ -375,7 +400,9 @@ function Grid({ r }: { r: Reflect<M> }) {
         <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
           Click or tap anywhere to start audio 🔊
         </p>
-        <div className={`presenceBarContainer ${audioInitialized ? "" : "hidden"}`}>
+        <div
+          className={`presenceBarContainer ${audioInitialized ? "" : "hidden"}`}
+        >
           <PresenceBar r={r} />
         </div>
       </div>
@@ -397,28 +424,30 @@ function Grid({ r }: { r: Reflect<M> }) {
               })}
               style={
                 enabledCells[id]
-                  ? { backgroundColor: enabledCells[id].color }
+                  ? {
+                      backgroundColor: colorStringForColorID(
+                        enabledCells[id].color
+                      ),
+                    }
                   : {}
               }
               onPointerOver={(e) => {
-                handlePointerOver(e, id);
+                handlePointerOver?.(e, id);
               }}
               onPointerOut={(e) => {
-                handlePointerOut(e, id);
+                handlePointerOut?.(e, id);
               }}
-              onTouchStart={() => handleTouchStart(id)}
-              onTouchEnd={handleTouchEnd}
-              onClick={() => {
-                setHoveredID(null);
-                r.mutate.setCellEnabled({
-                  id,
-                  enabled: !(id in enabledCells),
-                });
-              }}
+              onTouchStart={() => handleTouchStart?.(id)}
+              onTouchEnd={() => handleTouchEnd?.()}
+              onClick={() => handleClick?.(id)}
             >
               <div
                 className="cellHighlight"
-                style={selfColor ? { backgroundColor: selfColor } : {}}
+                style={
+                  selfColor
+                    ? { backgroundColor: colorStringForColorID(selfColor) }
+                    : {}
+                }
               />
             </div>
           );

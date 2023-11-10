@@ -1,23 +1,27 @@
-// Footer.tsx
-
-import React from 'react';
-import './Footer.css';
+import "./Footer.css";
 import CreatedWithReflect from "../src/assets/created-with-reflect.svg?react";
+import { useCallback } from "react";
 
-interface FooterProps {
-  shareUrl: string;
+const Footer = ({
+  createShareURL,
+  reflectUrl,
+}: {
+  createShareURL: () => Promise<string>;
   reflectUrl: string;
-}
-
-const Footer: React.FC<FooterProps> = ({shareUrl, reflectUrl}) => {
+}) => {
+  const handleShare = useCallback(async () => {
+    window.location.href = await createShareURL();
+  }, [createShareURL]);
   return (
     <footer className="footer">
       <div className="footer-content">
         <a href={reflectUrl}>
-            <CreatedWithReflect className="createdWithReflect" />
+          <CreatedWithReflect className="createdWithReflect" />
         </a>
         <div className="footer-links">
-          <a href={shareUrl} className="footer-link primary-cta">Share</a>
+          <a onClick={handleShare} className="footer-link primary-cta">
+            Share
+          </a>
         </div>
       </div>
     </footer>

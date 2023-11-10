@@ -3,7 +3,7 @@ import { usePresence, useSubscribe } from "@rocicorp/reflect/react";
 import { Client, getClient } from "./model/client.js";
 import type { M } from "./mutators.js";
 
-export function useSelfColor(r: Reflect<M>) {
+export function useSelfColor(r: Reflect<M> | undefined) {
   return useSubscribe(
     r,
     async (tx) => (await getClient(tx, tx.clientID))?.color,
@@ -11,7 +11,7 @@ export function useSelfColor(r: Reflect<M>) {
   );
 }
 
-export function usePresentClients(r: Reflect<M>): Client[] {
+export function usePresentClients(r: Reflect<M> | undefined): Client[] {
   const presentClientIDs = usePresence(r);
   return useSubscribe(
     r,
