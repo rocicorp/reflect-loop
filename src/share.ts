@@ -7,7 +7,7 @@ export async function getShareURL(r: Reflect<M> | undefined) {
   if (r) {
     const cellsEncoded = (await r.query(listCells))
       .map((cell) => `${cell.id}${cell.color}`)
-      .join(",");
+      .join("-");
     url.search = `s=${cellsEncoded}`;
   }
   return url.toString();
@@ -19,7 +19,7 @@ export function getFixedCellInfo() {
   if (!encoded) {
     return;
   }
-  const parts = encoded.split(",");
+  const parts = encoded.split("-");
   if (parts.length === 0) {
     return;
   }
