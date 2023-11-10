@@ -18,7 +18,6 @@ import {
   getClientRoomAssignment,
 } from "../reflect/model/orchestrator";
 import { getFixedCellInfo, getShareURL } from "./share";
-import { randomColorID } from "../reflect/model/colors";
 
 const server = import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/";
 
@@ -105,7 +104,7 @@ function useReflect() {
       mutators,
       server,
     });
-    void reflect.mutate.initClient({ color: randomColorID() });
+    void reflect.mutate.initClient();
 
     void fetch("https://reflect.net/api/get-location")
       .then((resp) => resp.json())
