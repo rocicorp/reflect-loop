@@ -1,7 +1,6 @@
 import * as v from "@badrap/valita";
 import { Update, generate } from "@rocicorp/rails";
 import { WriteTransaction } from "@rocicorp/reflect";
-import { randomColorID } from "./colors";
 
 const cursorSchema = v.object({ x: v.number(), y: v.number() });
 const locationSchema = v.object({
@@ -26,11 +25,14 @@ const clientGenerateResult = generate(
 
 export const { get: getClient } = clientGenerateResult;
 
-export const initClient = async (tx: WriteTransaction) => {
+export const initClient = async (
+  tx: WriteTransaction,
+  { color }: { color: string }
+) => {
   const id = tx.clientID;
   const client = {
     id,
-    color: randomColorID(),
+    color,
   };
   await clientGenerateResult.put(tx, client);
 };
