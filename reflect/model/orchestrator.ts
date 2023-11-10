@@ -5,7 +5,7 @@ import * as v from "@badrap/valita";
 // Changing this string to the next in the sequence a-z,aa-zz,aaa-zzz,..
 // will force a new orchestrator and rooms.  This can be useful if we make
 // breaking schema changes or simply want rooms with less garbage built up.
-const ROOMS_VERSION = "b";
+const ROOMS_VERSION = "c";
 
 export const ORCHESTRATOR_ROOM = `orch-${ROOMS_VERSION}`;
 
