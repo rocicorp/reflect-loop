@@ -35,7 +35,7 @@ export const simpleHash = (s: string) => {
 };
 
 export function colorIDFromID(id: string): string {
-  return (simpleHash(id) % COLOR_PALATE.length).toString();
+  return Math.abs(simpleHash(id) % COLOR_PALATE.length).toString();
 }
 
 export function colorStringForColorID(id: string) {
