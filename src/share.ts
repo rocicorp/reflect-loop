@@ -25,7 +25,7 @@ export function getFixedCellInfo() {
   }
   const cells: Record<string, Cell> = {};
   for (const part of parts) {
-    if (parts.length < 3) {
+    if (part.length < 3) {
       return;
     }
     // TODO: validate cellID and color
