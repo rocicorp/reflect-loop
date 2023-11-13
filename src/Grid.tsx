@@ -150,18 +150,29 @@ function Grid({
     analyserRef.current.connect(audioContextRef.current.destination);
   }, []);
 
-  // This enable audio on click.
-  // TODO: Add a play button overload so users know they need to click
   useEffect(() => {
-    let audioInitialized = false;
+    const audioContext = audioContextRef.current;
+    setAudioInitialized(audioContext.state === "running");
+    const handler = () => {
+      setAudioInitialized(audioContext.state === "running");
+    };
+    audioContext.addEventListener("statechange", handler);
+    return () => {
+      audioContext.removeEventListener("statechange", handler);
+    };
+  }, []);
+
+  // This enables audio on click.
+  useEffect(() => {
+    if (audioInitialized) {
+      return;
+    }
     const handler = async () => {
       if (audioInitialized) {
+        removeEventListeners();
         return;
       }
       const audioContext = audioContextRef.current;
-      if (!audioContext) {
-        return;
-      }
 
       const buffer = audioContext.createBuffer(1, 1, 22050); // 1/10th of a second of silence
       const source = audioContext.createBufferSource();
@@ -183,8 +194,6 @@ function Grid({
       }
       try {
         await audioContext.resume();
-        audioInitialized = true;
-        setAudioInitialized(true);
         removeEventListeners();
       } catch (e) {
         console.error("Failed to start audio context", e);
@@ -199,7 +208,7 @@ function Grid({
     };
     window.document.documentElement.addEventListener("click", handler, false);
     return removeEventListeners;
-  }, []);
+  }, [audioInitialized]);
 
   const drawWaveform = () => {
     if (!canvasRef.current) return;
