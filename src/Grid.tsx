@@ -3,10 +3,10 @@ import { useEffect, useRef, useState, PointerEvent } from "react";
 import {
   Cell,
   coordsToID,
-  gridSize,
+  GRID_SIZE,
   indexToID,
   listCells,
-  numCells,
+  NUM_CELLS,
 } from "../reflect/model/cell";
 import { useSubscribe } from "replicache-react";
 import { Reflect } from "@rocicorp/reflect/client";
@@ -308,8 +308,8 @@ function Grid({
     // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
     // else if there is a delete just stop it
     const audioCtx = audioContextRef.current;
-    for (let y = 0; y < gridSize; y++) {
-      for (let x = 0; x < gridSize; x++) {
+    for (let y = 0; y < GRID_SIZE; y++) {
+      for (let x = 0; x < GRID_SIZE; x++) {
         const id = coordsToID(x, y);
         const source = sources.current[id];
         const active = source && source.playing;
@@ -422,7 +422,7 @@ function Grid({
         height="64"
       ></canvas>
       <div className="grid">
-        {new Array(numCells).fill(null).map((_, i) => {
+        {new Array(NUM_CELLS).fill(null).map((_, i) => {
           const id = indexToID(i);
           return (
             <div

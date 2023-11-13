@@ -1,6 +1,5 @@
 import "./Footer.css";
 import CreatedWithReflect from "../src/assets/created-with-reflect.svg?react";
-import { useCallback } from "react";
 
 const Footer = ({
   createShareURL,
@@ -9,9 +8,9 @@ const Footer = ({
   createShareURL: () => Promise<string>;
   reflectUrl: string;
 }) => {
-  const handleShare = useCallback(async () => {
+  const handleShare = async () => {
     window.location.href = await createShareURL();
-  }, [createShareURL]);
+  };
   return (
     <footer className="footer">
       <div className="footer-content">

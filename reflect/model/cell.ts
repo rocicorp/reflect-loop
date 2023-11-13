@@ -3,8 +3,9 @@ import * as v from "@badrap/valita";
 import { WriteTransaction } from "@rocicorp/reflect";
 import { getClient } from "./client";
 import { colorIDFromID } from "./colors";
-export const gridSize = 8;
-export const numCells = gridSize * gridSize;
+
+export const GRID_SIZE = 8;
+export const NUM_CELLS = GRID_SIZE * GRID_SIZE;
 
 const cellSchema = v.object({
   id: v.string(),
@@ -42,11 +43,11 @@ export async function setCellEnabled(
 
 export function idToCoords(id: string): [number, number] {
   const i = parseInt(id);
-  return [i % gridSize, Math.floor(i / gridSize)];
+  return [i % GRID_SIZE, Math.floor(i / GRID_SIZE)];
 }
 
 export function coordsToID(x: number, y: number): string {
-  return indexToID(x + y * gridSize);
+  return indexToID(x + y * GRID_SIZE);
 }
 
 export function indexToID(i: number): string {
