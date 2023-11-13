@@ -18,10 +18,21 @@ import {
   getClientRoomAssignment,
 } from "../reflect/model/orchestrator";
 import { getFixedCellInfo, getShareURL } from "./share";
+import { randomColorID } from "../reflect/model/colors";
 
 const server = import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/";
 
 const fixedCellInfo = getFixedCellInfo();
+const clientColor = randomColorID();
+const clientLocation = fetch("https://reflect.net/api/get-location")
+  .then((resp) => resp.json())
+  .then((data) => {
+    const { country, city } = data;
+    return { country, city };
+  })
+  .catch(() => {
+    return undefined;
+  });
 
 function useRoomID() {
   const [roomID, setRoomID] = useState<string | undefined>(undefined);
@@ -89,29 +100,24 @@ function useRoomID() {
   return roomID;
 }
 
-function useReflect() {
+function useReflect(roomID: string | undefined) {
   const [r, setR] = useState<Reflect<M> | undefined>(undefined);
 
-  const roomID = useRoomID();
   useEffect(() => {
-    if (!roomID) {
-      return;
-    }
-
     const reflect = new Reflect({
-      roomID,
+      roomID: roomID ?? "local",
       userID: "anon",
       mutators,
-      server,
+      server: server ?? undefined,
     });
-    void reflect.mutate.initClient();
-
-    void fetch("https://reflect.net/api/get-location")
-      .then((resp) => resp.json())
-      .then((data) => {
-        const { country, city } = data;
-        void reflect.mutate.updateLocation({ country, city });
-      });
+    void reflect.mutate.initClient({
+      color: clientColor,
+    });
+    clientLocation.then((loc) => {
+      if (loc) {
+        void reflect.mutate.updateLocation(loc);
+      }
+    });
 
     setR(reflect);
     return () => {
@@ -173,7 +179,9 @@ function useElementSize<T extends Element>(deps: unknown[]) {
 }
 
 const App: React.FC = () => {
-  const r = useReflect();
+  const roomID = useRoomID();
+  const r = useReflect(roomID);
+
   const windowSize = useWindowSize();
   const [appRef, appRect] = useElementSize<HTMLDivElement>([windowSize]);
   const [docRect, setDocRect] = useState<Rect | null>(null);
@@ -191,7 +199,7 @@ const App: React.FC = () => {
   return (
     <div className="App" ref={appRef}>
       <LoopLogo className="loopLogo" />
-      <Grid r={r} fixedCells={fixedCellInfo?.cells} />
+      <Grid r={r} fixedCells={roomID ? fixedCellInfo?.cells : {}} />
       <Footer
         createShareURL={createShareURL}
         reflectUrl="https://reflect.net"

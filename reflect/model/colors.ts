@@ -38,8 +38,17 @@ export function colorIDFromID(id: string): string {
   return Math.abs(simpleHash(id) % COLOR_PALATE.length).toString();
 }
 
+export function randomColorID(): string {
+  return Math.abs(Math.floor(Math.random() * COLOR_PALATE.length)).toString();
+}
+
 export function colorStringForColorID(id: string) {
-  const index = Number.parseInt(id);
+  let index;
+  try {
+    index = Number.parseInt(id);
+  } catch (e) {
+    index = 0;
+  }
   const c = COLOR_PALATE[index];
   return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
 }
