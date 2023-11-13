@@ -172,6 +172,13 @@ function useElementSize<T extends Element>(deps: unknown[]) {
   return [ref, rect] as const;
 }
 
+const createPlayURL = () => {
+  const playURL = new URL(window.location.href);
+  playURL.pathname = "";
+  playURL.search = "";
+  return Promise.resolve(playURL.toString());
+};
+
 const App: React.FC = () => {
   const r = useReflect();
   const windowSize = useWindowSize();
@@ -193,7 +200,8 @@ const App: React.FC = () => {
       <LoopLogo className="loopLogo" />
       <Grid r={r} fixedCells={fixedCellInfo?.cells} />
       <Footer
-        createShareURL={createShareURL}
+        ctaText={fixedCellInfo ? "Play" : "Share"}
+        createCtaURL={fixedCellInfo ? createPlayURL : createShareURL}
         reflectUrl="https://reflect.net"
       />
       {appRect && docRect && r ? (
