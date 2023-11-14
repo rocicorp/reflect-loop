@@ -356,52 +356,47 @@ function Grid({
 
   const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
 
-  function callbackIfNotFixed<R>(callback: R): R | null {
-    return fixedCells ? null : callback;
-  }
-
-  const handleTouchStart = callbackIfNotFixed((id: string) => {
+  const handleTouchStart = (id: string) => {
     if (longPressTimeoutHandle.current === undefined) {
       longPressTimeoutHandle.current = setTimeout(() => {
         setHoveredID(id);
         longPressTimeoutHandle.current = undefined;
       }, 300);
     }
-  });
+  };
 
-  const handleTouchEnd = callbackIfNotFixed(() => {
+  const handleTouchEnd = () => {
     setHoveredID(null);
     if (longPressTimeoutHandle.current !== undefined) {
       clearTimeout(longPressTimeoutHandle.current);
       longPressTimeoutHandle.current = undefined;
     }
-  });
+  };
 
-  const handlePointerOver = callbackIfNotFixed(
-    (e: PointerEvent<HTMLDivElement>, id: string) => {
-      if (e.pointerType === "touch") {
-        return;
-      }
-      setHoveredID(id);
+  const handlePointerOver = (e: PointerEvent<HTMLDivElement>, id: string) => {
+    if (e.pointerType === "touch") {
+      return;
     }
-  );
+    setHoveredID(id);
+  };
 
-  const handlePointerOut = callbackIfNotFixed(
-    (e: PointerEvent<HTMLDivElement>, id: string) => {
-      if (e.pointerType === "touch") {
-        return;
-      }
-      setHoveredID((existing) => (existing === id ? null : existing));
+  const handlePointerOut = (e: PointerEvent<HTMLDivElement>, id: string) => {
+    if (e.pointerType === "touch") {
+      return;
     }
-  );
+    setHoveredID((existing) => (existing === id ? null : existing));
+  };
 
-  const handleClick = callbackIfNotFixed((id: string) => {
+  const handleClick = (id: string) => {
     setHoveredID(null);
+    if (fixedCells) {
+      return;
+    }
     r?.mutate.setCellEnabled({
       id,
       enabled: !(id in enabledCells),
     });
-  });
+  };
 
   return (
     <div>
