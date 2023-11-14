@@ -3,8 +3,6 @@ import * as v from "@badrap/valita";
 import { WriteTransaction } from "@rocicorp/reflect";
 import { getClient } from "./client";
 import { colorIDFromID } from "./colors";
-import { RoomType } from "./rooms";
-import { decorateWithAllowedRoomTypeCheck } from "../auth";
 
 export const GRID_SIZE = 8;
 export const NUM_CELLS = GRID_SIZE * GRID_SIZE;
@@ -48,9 +46,6 @@ async function setCellEnabled(
   }
 }
 
-export const mutators = decorateWithAllowedRoomTypeCheck(
-  {
-    setCellEnabled,
-  },
-  RoomType.Play
-);
+export const mutators = {
+  setCellEnabled,
+};

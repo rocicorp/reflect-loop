@@ -1,0 +1,8 @@
+{
+  "server": "server.ts",
+  "apps": {
+    "default": {
+      "appID": "loxv9i52"
+    }
+  }
+}

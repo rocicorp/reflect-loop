@@ -1,7 +1,6 @@
 import "./CursorField.css";
 import { Reflect } from "@rocicorp/reflect/client";
 import { useEffect } from "react";
-import { M } from "../reflect/mutators.js";
 import { usePresentClients } from "../reflect/subscriptions.js";
 import {
   Rect,
@@ -13,13 +12,14 @@ import { Client } from "../reflect/model/client.js";
 import { ClientID } from "@rocicorp/reflect";
 import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors.js";
+import { SHARE_M } from "../reflect/share/mutators.js";
 
 export default function CursorField({
   r,
   appRect,
   docRect,
 }: {
-  r: Reflect<M>;
+  r: Reflect<SHARE_M>;
   appRect: Rect;
   docRect: Rect;
 }) {

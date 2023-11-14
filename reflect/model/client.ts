@@ -1,8 +1,6 @@
 import * as v from "@badrap/valita";
 import { Update, generate } from "@rocicorp/rails";
 import { WriteTransaction } from "@rocicorp/reflect";
-import { decorateWithAllowedRoomTypeCheck } from "../auth";
-import { RoomType } from "./rooms";
 
 const cursorSchema = v.object({ x: v.number(), y: v.number() });
 const locationSchema = v.object({
@@ -66,12 +64,8 @@ const updateCursor = async (tx: WriteTransaction, cursor: Cursor) => {
   });
 };
 
-export const mutators = decorateWithAllowedRoomTypeCheck(
-  {
-    initClient,
-    updateLocation,
-    updateCursor,
-  },
-  RoomType.Play,
-  RoomType.Share
-);
+export const mutators = {
+  initClient,
+  updateLocation,
+  updateCursor,
+};
