@@ -7,12 +7,10 @@ import { Reflect } from "@rocicorp/reflect/client";
 import { M, mutators } from "../reflect/mutators";
 import CursorField from "./CursorField";
 import { Rect } from "./coordinates";
-import {
-  ORCHESTRATOR_ROOM,
-  getClientRoomAssignment,
-} from "../reflect/model/orchestrator";
 import { getShareInfo, getShareURL } from "./share";
+import { getClientRoomAssignment } from "../reflect/model/orchestrator";
 import { randomColorID } from "../reflect/model/colors";
+import { getPlayOrchestratorRoomID } from "../reflect/model/rooms";
 
 const server = import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/";
 
@@ -38,7 +36,7 @@ function useRoomID() {
     const orchestratorR = new Reflect<M>({
       server,
       userID: "anon",
-      roomID: ORCHESTRATOR_ROOM,
+      roomID: getPlayOrchestratorRoomID(),
       mutators,
     });
 

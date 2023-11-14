@@ -3,6 +3,7 @@ import * as v from "@badrap/valita";
 import { WriteTransaction } from "@rocicorp/reflect";
 import { getClient } from "./client";
 import { colorIDFromID } from "./colors";
+import { RoomTypes, getRoomType } from "./rooms";
 
 export const GRID_SIZE = 8;
 export const NUM_CELLS = GRID_SIZE * GRID_SIZE;
@@ -30,6 +31,11 @@ export async function setCellEnabled(
   tx: WriteTransaction,
   { id, enabled }: { id: string; enabled: boolean }
 ) {
+  if (tx.auth && typeof tx.auth.roomID === "string") {
+    if (getRoomType(tx.auth.roomID) !== RoomTypes.Play) {
+      return;
+    }
+  }
   if (enabled) {
     const client = await getClient(tx, tx.clientID);
     await initCell(tx, {

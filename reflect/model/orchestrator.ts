@@ -1,20 +1,11 @@
 import { generate } from "@rocicorp/rails";
 import type { ReadTransaction, WriteTransaction } from "@rocicorp/reflect";
 import * as v from "@badrap/valita";
-
-// Changing this string to the next in the sequence a-z,aa-zz,aaa-zzz,..
-// will force a new orchestrator and rooms.  This can be useful if we make
-// breaking schema changes or simply want rooms with less garbage built up.
-const ROOMS_VERSION = "d";
-
-export const ORCHESTRATOR_ROOM = `orch-${ROOMS_VERSION}`;
+import { getPlayRoomID } from "./rooms";
 
 const MAX_CLIENTS_PER_ROOM = 5;
 const CLIENT_ROOM_ASSIGNMENT_GC_THRESHOLD_MS = 60_000;
 const CLIENT_ROOM_ASSIGNMENT_GC_INTERVAL_MS = 10_000;
-
-const roomIndexToRoomID = (index: number) =>
-  `r-${ROOMS_VERSION}-${index.toString(10).padStart(7, "0")}`;
 
 const roomModelSchema = v.object({
   id: v.string(),
@@ -140,7 +131,7 @@ export async function alive(tx: WriteTransaction) {
   }
   // assign a room
   for (let roomIndex = 0, roomAssigned = false; !roomAssigned; roomIndex++) {
-    const roomID = roomIndexToRoomID(roomIndex);
+    const roomID = getPlayRoomID(roomIndex);
     const room = await getRoom(tx, roomID);
     const clientCount = room?.clientCount ?? 0;
     if (clientCount < MAX_CLIENTS_PER_ROOM) {
