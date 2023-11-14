@@ -52,12 +52,6 @@ function useRoomID() {
       mutators: orchestratorMutators,
     });
 
-    orchestratorR.onUpdateNeeded = (reason) => {
-      if (reason.type !== "NewClientGroup") {
-        location.reload();
-      }
-    };
-
     orchestratorR.subscribe((tx) => getClientRoomAssignment(tx, tx.clientID), {
       onData: (result) => {
         setRoomID((prev) => {
