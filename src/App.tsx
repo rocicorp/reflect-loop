@@ -185,6 +185,11 @@ function useRoom(roomID: string | undefined) {
         r,
       });
     }
+    toClose.onUpdateNeeded = (reason) => {
+      if (reason.type !== "NewClientGroup") {
+        location.reload();
+      }
+    };
 
     return () => {
       setRoom(undefined);
