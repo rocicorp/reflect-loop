@@ -140,6 +140,9 @@ function useRoom(roomID: string | undefined) {
     }
 
     void room.r.mutate.initClient({ color: clientColor });
+    if (room.type === "play") {
+      void room.r.mutate.ensureOneCellEnabled();
+    }
     clientLocation.then(async (loc) => {
       if (loc && !room.r.closed) {
         void room.r.mutate.updateLocation(loc);
