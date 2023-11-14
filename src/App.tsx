@@ -1,11 +1,5 @@
 import "./App.css";
-import React, {
-  Fragment,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Grid from "./Grid";
 import Footer from "./Footer";
 import LoopLogo from "../src/assets/loop-logo.svg?react";
@@ -110,6 +104,32 @@ function useRoom(roomID: string | undefined) {
 
   useEffect(() => {
     let room: Room;
+
+    const reflect =
+      roomID === undefined
+        ? new Reflect({
+            roomID: "local",
+            userID: "anon",
+            mutators: shareMutators,
+            server: undefined,
+          })
+        : shareInfo === undefined
+        ? new Reflect({
+            roomID,
+            userID: "anon",
+            mutators: playMutators,
+            server: playServer,
+          })
+        : new Reflect({
+            roomID,
+            userID: "anon",
+            mutators: shareMutators,
+            server: shareServer,
+          });
+    void reflect.mutate.initClient({
+      color: clientColor,
+    });
+
     if (roomID === undefined) {
       room = {
         type: "share",
@@ -241,16 +261,14 @@ const App: React.FC = () => {
   return (
     <div className="App" ref={appRef}>
       <LoopLogo className="loopLogo" />
+      <Grid room={room} />
+      <Footer
+        ctaText={shareInfo ? "Play" : "Share"}
+        createCtaURL={shareInfo ? createPlayURL : createShareURL}
+        reflectUrl="https://reflect.net"
+      />
       {room && appRect && docRect ? (
-        <Fragment>
-          <Grid room={room} />
-          <Footer
-            ctaText={shareInfo ? "Play" : "Share"}
-            createCtaURL={shareInfo ? createPlayURL : createShareURL}
-            reflectUrl="https://reflect.net"
-          />
-          <CursorField r={room.r} appRect={appRect} docRect={docRect} />
-        </Fragment>
+        <CursorField r={room.r} appRect={appRect} docRect={docRect} />
       ) : null}
     </div>
   );

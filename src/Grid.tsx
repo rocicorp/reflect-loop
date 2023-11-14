@@ -56,8 +56,8 @@ class SourceNode {
   }
 }
 
-function Grid({ room }: { room: Room }) {
-  const selfColor = useSelfColor(room.r);
+function Grid({ room }: { room: Room | undefined }) {
+  const selfColor = useSelfColor(room?.r);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
@@ -279,7 +279,7 @@ function Grid({ room }: { room: Room }) {
   }, []);
 
   const enabledCellsFromSubscribe = useSubscribe(
-    room.r,
+    room?.r,
     async (tx) => {
       const cells = await listCells(tx);
       return Object.fromEntries(cells.map((c) => [c.id, c] as const));
@@ -288,7 +288,7 @@ function Grid({ room }: { room: Room }) {
   );
 
   const enabledCells =
-    room.type === "share" ? room.fixedCells : enabledCellsFromSubscribe;
+    room?.type === "share" ? room.fixedCells : enabledCellsFromSubscribe;
 
   const sources = useRef<Record<string, SourceNode>>({});
 
@@ -382,7 +382,7 @@ function Grid({ room }: { room: Room }) {
 
   const handleClick = (id: string) => {
     setHoveredID(null);
-    if (room.type === "play") {
+    if (room?.type === "play") {
       room.r.mutate.setCellEnabled({ id, enabled: !(id in enabledCells) });
     }
   };
@@ -396,7 +396,7 @@ function Grid({ room }: { room: Room }) {
         <div
           className={`presenceBarContainer ${audioInitialized ? "" : "hidden"}`}
         >
-          <PresenceBar r={room.r} />
+          <PresenceBar r={room?.r} />
         </div>
       </div>
       <canvas
