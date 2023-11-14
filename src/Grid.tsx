@@ -349,43 +349,51 @@ function Grid({ room }: { room: Room | undefined }) {
 
   const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
 
-  const handleTouchStart = (id: string) => {
+  function handleIfPlayRoom<R>(handler: R) {
+    return room?.type === "play" ? handler : () => {};
+  }
+
+  const handleTouchStart = handleIfPlayRoom((id: string) => {
     if (longPressTimeoutHandle.current === undefined) {
       longPressTimeoutHandle.current = setTimeout(() => {
         setHoveredID(id);
         longPressTimeoutHandle.current = undefined;
       }, 300);
     }
-  };
+  });
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = handleIfPlayRoom(() => {
     setHoveredID(null);
     if (longPressTimeoutHandle.current !== undefined) {
       clearTimeout(longPressTimeoutHandle.current);
       longPressTimeoutHandle.current = undefined;
     }
-  };
+  });
 
-  const handlePointerOver = (e: PointerEvent<HTMLDivElement>, id: string) => {
-    if (e.pointerType === "touch") {
-      return;
+  const handlePointerOver = handleIfPlayRoom(
+    (e: PointerEvent<HTMLDivElement>, id: string) => {
+      if (e.pointerType === "touch") {
+        return;
+      }
+      setHoveredID(id);
     }
-    setHoveredID(id);
-  };
+  );
 
-  const handlePointerOut = (e: PointerEvent<HTMLDivElement>, id: string) => {
-    if (e.pointerType === "touch") {
-      return;
+  const handlePointerOut = handleIfPlayRoom(
+    (e: PointerEvent<HTMLDivElement>, id: string) => {
+      if (e.pointerType === "touch") {
+        return;
+      }
+      setHoveredID((existing) => (existing === id ? null : existing));
     }
-    setHoveredID((existing) => (existing === id ? null : existing));
-  };
+  );
 
-  const handleClick = (id: string) => {
+  const handleClick = handleIfPlayRoom((id: string) => {
     setHoveredID(null);
     if (room?.type === "play") {
       room.r.mutate.setCellEnabled({ id, enabled: !(id in enabledCells) });
     }
-  };
+  });
 
   return (
     <div>
