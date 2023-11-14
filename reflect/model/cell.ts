@@ -31,6 +31,18 @@ export function indexToID(i: number): string {
   return String(i).padStart(2, "0");
 }
 
+async function ensureOneCellEnabled(tx: WriteTransaction) {
+  if (tx.location !== "server") {
+    return;
+  }
+  const cells = await listCells(tx);
+  if (cells.length === 0) {
+    const randCoord = () => Math.floor(Math.random() * GRID_SIZE);
+    const randomID = coordsToID(randCoord(), randCoord());
+    await setCellEnabled(tx, { id: randomID, enabled: true });
+  }
+}
+
 async function setCellEnabled(
   tx: WriteTransaction,
   { id, enabled }: { id: string; enabled: boolean }
@@ -48,4 +60,5 @@ async function setCellEnabled(
 
 export const mutators = {
   setCellEnabled,
+  ensureOneCellEnabled,
 };
