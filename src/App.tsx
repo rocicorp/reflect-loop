@@ -1,21 +1,32 @@
 import "./App.css";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import Grid from "./Grid";
 import Footer from "./Footer";
 import LoopLogo from "../src/assets/loop-logo.svg?react";
 import { Reflect } from "@rocicorp/reflect/client";
-import { M, mutators } from "../reflect/mutators";
 import CursorField from "./CursorField";
 import { Rect } from "./coordinates";
 import { getShareInfo, getShareURL } from "./share";
 import { getClientRoomAssignment } from "../reflect/model/orchestrator";
 import { randomColorID } from "../reflect/model/colors";
-import {
-  getPlayOrchestratorRoomID,
-  getShareOrchestratorRoomID,
-} from "../reflect/model/rooms";
+import { getOrchstratorRoomID } from "../reflect/model/rooms";
+import { SHARE_M, shareMutators } from "../reflect/share/mutators";
+import { PLAY_M, playMutators } from "../reflect/play/mutators";
+import { orchestratorMutators } from "../reflect/orchestrator/mutators";
+import { Room } from "./room";
 
-const server = import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/";
+const orchestratorServer =
+  import.meta.env.VITE_REFLECT_ORCHESTRATOR_SERVER ?? "http://127.0.0.1:8080/";
+const playServer =
+  import.meta.env.VITE_REFLECT_PLAY_SERVER ?? "http://127.0.0.1:8080/";
+const shareServer =
+  import.meta.env.VITE_REFLECT_SHARE_SERVER ?? "http://127.0.0.1:8080/";
 
 const shareInfo = getShareInfo();
 const clientColor = randomColorID();
@@ -32,14 +43,13 @@ const clientLocation = fetch("https://reflect.net/api/get-location")
 function useRoomID() {
   const [roomID, setRoomID] = useState<string | undefined>(undefined);
   useEffect(() => {
-    const orchestratorR = new Reflect<M>({
-      server,
+    const orchestratorR = new Reflect({
+      server: orchestratorServer,
       userID: "anon",
-      auth: "anon",
-      roomID: shareInfo
-        ? getShareOrchestratorRoomID(shareInfo.encodedCells)
-        : getPlayOrchestratorRoomID(),
-      mutators,
+      roomID: getOrchstratorRoomID(
+        shareInfo ? shareInfo.encodedCells : "public"
+      ),
+      mutators: orchestratorMutators,
     });
 
     orchestratorR.onUpdateNeeded = (reason) => {
@@ -61,7 +71,14 @@ function useRoomID() {
     });
     const aliveIfVisible = () => {
       if (document.visibilityState === "visible") {
-        void orchestratorR.mutate.alive();
+        void orchestratorR.mutate.alive(
+          shareInfo
+            ? {
+                type: "share",
+                encodedCells: shareInfo.encodedCells,
+              }
+            : { type: "play" }
+        );
       }
     };
     aliveIfVisible();
@@ -94,17 +111,31 @@ function useRoomID() {
   return roomID;
 }
 
-function useReflect(roomID: string | undefined) {
-  const [r, setR] = useState<Reflect<M> | undefined>(undefined);
+function useRoom(roomID: string | undefined) {
+  const [room, setRoom] = useState<Room>();
 
   useEffect(() => {
-    const reflect = new Reflect({
-      roomID: roomID ?? "local",
-      userID: "anon",
-      auth: "anon-auth",
-      mutators,
-      server: roomID ? server : undefined,
-    });
+    const reflect =
+      roomID === undefined
+        ? new Reflect({
+            roomID: "local",
+            userID: "anon",
+            mutators: shareMutators,
+            server: undefined,
+          })
+        : shareInfo
+        ? new Reflect({
+            roomID,
+            userID: "anon",
+            mutators: playMutators,
+            server: playServer,
+          })
+        : new Reflect({
+            roomID,
+            userID: "anon",
+            mutators: shareMutators,
+            server: shareServer,
+          });
     void reflect.mutate.initClient({
       color: clientColor,
     });
@@ -114,14 +145,54 @@ function useReflect(roomID: string | undefined) {
       }
     });
 
-    setR(reflect);
+    let toClose: Reflect<PLAY_M | SHARE_M>;
+    if (roomID === undefined) {
+      const r = new Reflect({
+        roomID: "local",
+        userID: "anon",
+        mutators: shareMutators,
+        server: undefined,
+      });
+      toClose = r;
+      setRoom({
+        type: "share",
+        r,
+        fixedCells: {},
+      });
+    } else if (shareInfo !== undefined) {
+      const r = new Reflect({
+        roomID,
+        userID: "anon",
+        mutators: shareMutators,
+        server: shareServer,
+      });
+      toClose = r;
+      setRoom({
+        type: "share",
+        r,
+        fixedCells: shareInfo.cells,
+      });
+    } else {
+      const r = new Reflect({
+        roomID,
+        userID: "anon",
+        mutators: playMutators,
+        server: playServer,
+      });
+      toClose = r;
+      setRoom({
+        type: "play",
+        r,
+      });
+    }
+
     return () => {
-      setR(undefined);
-      void reflect.close();
+      setRoom(undefined);
+      void toClose.close();
     };
   }, [roomID]);
 
-  return r;
+  return room;
 }
 
 function useWindowSize() {
@@ -182,7 +253,7 @@ const createPlayURL = () => {
 
 const App: React.FC = () => {
   const roomID = useRoomID();
-  const r = useReflect(roomID);
+  const room = useRoom(roomID);
 
   const windowSize = useWindowSize();
   const [appRef, appRect] = useElementSize<HTMLDivElement>([windowSize]);
@@ -195,20 +266,25 @@ const App: React.FC = () => {
   }, [windowSize]);
 
   const createShareURL = () => {
-    return getShareURL(r);
+    if (room === undefined || room.type === "share") {
+      return createPlayURL();
+    }
+    return getShareURL(room.r);
   };
 
   return (
     <div className="App" ref={appRef}>
       <LoopLogo className="loopLogo" />
-      <Grid r={r} fixedCells={roomID ? shareInfo?.cells : {}} />
-      <Footer
-        ctaText={shareInfo ? "Play" : "Share"}
-        createCtaURL={shareInfo ? createPlayURL : createShareURL}
-        reflectUrl="https://reflect.net"
-      />
-      {appRect && docRect && r ? (
-        <CursorField r={r} appRect={appRect} docRect={docRect} />
+      {room && appRect && docRect ? (
+        <Fragment>
+          <Grid room={room} />
+          <Footer
+            ctaText={shareInfo ? "Play" : "Share"}
+            createCtaURL={shareInfo ? createPlayURL : createShareURL}
+            reflectUrl="https://reflect.net"
+          />
+          <CursorField r={room.r} appRect={appRect} docRect={docRect} />
+        </Fragment>
       ) : null}
     </div>
   );

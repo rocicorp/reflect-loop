@@ -1,8 +1,0 @@
-{
-  "server": "reflect/index.ts",
-  "apps": {
-    "default": {
-      "appID": "lof5fld8"
-    }
-  }
-}

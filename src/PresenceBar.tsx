@@ -1,12 +1,17 @@
 import "./PrescenceBar.css";
 import { Reflect } from "@rocicorp/reflect/client";
-import { M } from "../reflect/mutators.js";
 import { usePresentClients } from "../reflect/subscriptions.js";
 import { flagEmojiForLocation } from "./location.js";
 import { Client } from "../reflect/model/client.js";
 import { colorStringForColorID } from "../reflect/model/colors.js";
+import { PLAY_M } from "../reflect/play/mutators.js";
+import { SHARE_M } from "../reflect/share/mutators.js";
 
-export default function PresenceBar({ r }: { r: Reflect<M> | undefined }) {
+export default function PresenceBar({
+  r,
+}: {
+  r: Reflect<PLAY_M | SHARE_M> | undefined;
+}) {
   const presentClients = usePresentClients(r);
   return (
     <div className="presenceAvatars">

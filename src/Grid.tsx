@@ -1,7 +1,6 @@
 import "./Grid.css";
 import { useEffect, useRef, useState, PointerEvent } from "react";
 import {
-  Cell,
   coordsToID,
   GRID_SIZE,
   indexToID,
@@ -9,12 +8,11 @@ import {
   NUM_CELLS,
 } from "../reflect/model/cell";
 import { useSubscribe } from "replicache-react";
-import { Reflect } from "@rocicorp/reflect/client";
-import { M } from "../reflect/mutators.js";
 import { useSelfColor } from "../reflect/subscriptions.js";
 import PresenceBar from "./PresenceBar.js";
 import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors.js";
+import { Room } from "./room.js";
 
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
@@ -58,14 +56,8 @@ class SourceNode {
   }
 }
 
-function Grid({
-  r,
-  fixedCells,
-}: {
-  r: Reflect<M> | undefined;
-  fixedCells?: Record<string, Cell> | undefined;
-}) {
-  const selfColor = useSelfColor(r);
+function Grid({ room }: { room: Room }) {
+  const selfColor = useSelfColor(room.r);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
@@ -287,7 +279,7 @@ function Grid({
   }, []);
 
   const enabledCellsFromSubscribe = useSubscribe(
-    r,
+    room.r,
     async (tx) => {
       const cells = await listCells(tx);
       return Object.fromEntries(cells.map((c) => [c.id, c] as const));
@@ -295,7 +287,8 @@ function Grid({
     {}
   );
 
-  const enabledCells = fixedCells ?? enabledCellsFromSubscribe;
+  const enabledCells =
+    room.type === "share" ? room.fixedCells : enabledCellsFromSubscribe;
 
   const sources = useRef<Record<string, SourceNode>>({});
 
@@ -389,13 +382,9 @@ function Grid({
 
   const handleClick = (id: string) => {
     setHoveredID(null);
-    if (fixedCells) {
-      return;
+    if (room.type === "play") {
+      room.r.mutate.setCellEnabled({ id, enabled: !(id in enabledCells) });
     }
-    r?.mutate.setCellEnabled({
-      id,
-      enabled: !(id in enabledCells),
-    });
   };
 
   return (
@@ -407,7 +396,7 @@ function Grid({
         <div
           className={`presenceBarContainer ${audioInitialized ? "" : "hidden"}`}
         >
-          <PresenceBar r={r} />
+          <PresenceBar r={room.r} />
         </div>
       </div>
       <canvas

@@ -1,8 +1,9 @@
 import { Reflect } from "@rocicorp/reflect/client";
-import { M } from "../reflect/mutators.js";
 import { Cell, listCells } from "../reflect/model/cell";
+import { PLAY_M } from "../reflect/play/mutators";
+import { SHARE_M } from "../reflect/share/mutators";
 
-export async function getShareURL(r: Reflect<M> | undefined) {
+export async function getShareURL(r: Reflect<PLAY_M | SHARE_M> | undefined) {
   const url = new URL(window.location.href);
   if (r) {
     const cellsEncoded = (await r.query(listCells))

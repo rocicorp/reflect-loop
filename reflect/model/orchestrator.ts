@@ -1,13 +1,7 @@
 import { generate } from "@rocicorp/rails";
 import type { ReadTransaction, WriteTransaction } from "@rocicorp/reflect";
 import * as v from "@badrap/valita";
-import {
-  RoomType,
-  getPlayRoomID,
-  getRoomTypeForRoomID,
-  getShareRoomID,
-} from "./rooms";
-import { decorateWithAllowedRoomTypeCheck } from "../auth";
+import { getPlayRoomID, getShareRoomID } from "./rooms";
 
 const MAX_CLIENTS_PER_PLAY_ROOM = 5;
 const MAX_CLIENTS_PER_SHARE_ROOM = 50;
@@ -88,7 +82,10 @@ async function updateRoomClientCount(
   }
 }
 
-async function alive(tx: WriteTransaction) {
+async function alive(
+  tx: WriteTransaction,
+  args: { type: "play" } | { type: "share"; encodedCells: string }
+) {
   if (tx.location !== "server") {
     return;
   }
@@ -136,16 +133,11 @@ async function alive(tx: WriteTransaction) {
     });
     return;
   }
-  const orchRoomID = tx.auth?.roomID;
-  if (typeof orchRoomID !== "string") {
-    return;
-  }
-  const orchRoomType = getRoomTypeForRoomID(orchRoomID);
   // assign a room
   for (let roomIndex = 0, roomAssigned = false; !roomAssigned; roomIndex++) {
     const roomID =
-      orchRoomType === RoomType.ShareOrchestrator
-        ? getShareRoomID(orchRoomID, roomIndex)
+      args.type === "share"
+        ? getShareRoomID(args.encodedCells, roomIndex)
         : getPlayRoomID(roomIndex);
     if (roomID === undefined) {
       return;
@@ -153,7 +145,7 @@ async function alive(tx: WriteTransaction) {
     const room = await getRoom(tx, roomID);
     const clientCount = room?.clientCount ?? 0;
     const maxClients =
-      orchRoomType === RoomType.ShareOrchestrator
+      args.type === "share"
         ? MAX_CLIENTS_PER_SHARE_ROOM
         : MAX_CLIENTS_PER_PLAY_ROOM;
     if (clientCount < maxClients) {
@@ -188,11 +180,7 @@ async function unload(tx: WriteTransaction) {
   }
 }
 
-export const mutators = decorateWithAllowedRoomTypeCheck(
-  {
-    alive,
-    unload,
-  },
-  RoomType.PlayOrchestrator,
-  RoomType.ShareOrchestrator
-);
+export const mutators = {
+  alive,
+  unload,
+};
