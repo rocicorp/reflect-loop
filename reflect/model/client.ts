@@ -12,6 +12,7 @@ const clientModelSchema = v.object({
   color: v.string(),
   cursor: cursorSchema.optional(),
   location: locationSchema.optional(),
+  isTouch: v.boolean().optional(),
 });
 
 export type Cursor = v.Infer<typeof cursorSchema>;
@@ -64,8 +65,16 @@ const updateCursor = async (tx: WriteTransaction, cursor: Cursor) => {
   });
 };
 
+const markAsTouchClient = async (tx: WriteTransaction) => {
+  await clientGenerated.update(tx, {
+    id: tx.clientID,
+    isTouch: true,
+  });
+};
+
 export const mutators = {
   initClient,
   updateLocation,
   updateCursor,
+  markAsTouchClient,
 };

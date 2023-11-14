@@ -24,7 +24,13 @@ export default function CursorField({
   docRect: Rect;
 }) {
   useEffect(() => {
-    const handler = ({ pageX, pageY }: { pageX: number; pageY: number }) => {
+    const mouseMoveHandler = ({
+      pageX,
+      pageY,
+    }: {
+      pageX: number;
+      pageY: number;
+    }) => {
       const coordinate = positionToCoordinate(
         {
           x: pageX,
@@ -35,8 +41,16 @@ export default function CursorField({
       );
       void r.mutate.updateCursor(coordinate);
     };
-    window.addEventListener("mousemove", handler);
-    return () => window.removeEventListener("mousemove", handler);
+    const touchHandler = () => {
+      void r.mutate.markAsTouchClient();
+      window.removeEventListener("touchstart", touchHandler);
+    };
+    window.addEventListener("touchstart", touchHandler);
+    window.addEventListener("mousemove", mouseMoveHandler);
+    return () => {
+      window.removeEventListener("touchstart", touchHandler);
+      window.removeEventListener("mousemove", mouseMoveHandler);
+    };
   }, [r, appRect, docRect]);
 
   const presentClients = usePresentClients(r);
@@ -76,6 +90,7 @@ function Cursor({
     <div
       className={classNames("cursor", {
         "cursor-self": client.id === selfClientID,
+        "cursor-touch": client.isTouch,
       })}
       style={{
         transform: `translate3d(${cursorCoordinates.x}px, ${cursorCoordinates.y}px, 0)`,
