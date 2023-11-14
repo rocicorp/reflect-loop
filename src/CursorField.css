@@ -8,9 +8,12 @@
   transition: transform 200ms;
 }
 
+.cursor-self {
+  transition: none;
+}
+
 @media (hover: none) {
   .cursor-self {
-    transition: none;
     display: none;
   }
 }
