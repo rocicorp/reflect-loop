@@ -115,36 +115,6 @@ function useRoom(roomID: string | undefined) {
   const [room, setRoom] = useState<Room>();
 
   useEffect(() => {
-    const reflect =
-      roomID === undefined
-        ? new Reflect({
-            roomID: "local",
-            userID: "anon",
-            mutators: shareMutators,
-            server: undefined,
-          })
-        : shareInfo
-        ? new Reflect({
-            roomID,
-            userID: "anon",
-            mutators: playMutators,
-            server: playServer,
-          })
-        : new Reflect({
-            roomID,
-            userID: "anon",
-            mutators: shareMutators,
-            server: shareServer,
-          });
-    void reflect.mutate.initClient({
-      color: clientColor,
-    });
-    clientLocation.then((loc) => {
-      if (loc) {
-        void reflect.mutate.updateLocation(loc);
-      }
-    });
-
     let toClose: Reflect<PLAY_M | SHARE_M>;
     if (roomID === undefined) {
       const r = new Reflect({
