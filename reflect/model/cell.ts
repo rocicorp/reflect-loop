@@ -3,7 +3,8 @@ import * as v from "@badrap/valita";
 import { WriteTransaction } from "@rocicorp/reflect";
 import { getClient } from "./client";
 import { colorIDFromID } from "./colors";
-import { RoomTypes, getRoomType } from "./rooms";
+import { RoomType } from "./rooms";
+import { decorateWithAllowedRoomTypeCheck } from "../auth";
 
 export const GRID_SIZE = 8;
 export const NUM_CELLS = GRID_SIZE * GRID_SIZE;
@@ -15,37 +16,9 @@ const cellSchema = v.object({
 
 export type Cell = v.Infer<typeof cellSchema>;
 
-export const {
-  init: initCell,
-  listIDs: listCellIDs,
-  list: listCells,
-  has: hasCell,
-  get: getCell,
-  delete: deleteCell,
-  mustGet: mustGetCell,
-  put: putCell,
-  update: updateCell,
-} = generate<Cell>("cell", cellSchema.parse.bind(cellSchema));
+const cellGenerated = generate<Cell>("cell", cellSchema.parse.bind(cellSchema));
 
-export async function setCellEnabled(
-  tx: WriteTransaction,
-  { id, enabled }: { id: string; enabled: boolean }
-) {
-  if (tx.auth && typeof tx.auth.roomID === "string") {
-    if (getRoomType(tx.auth.roomID) !== RoomTypes.Play) {
-      return;
-    }
-  }
-  if (enabled) {
-    const client = await getClient(tx, tx.clientID);
-    await initCell(tx, {
-      id,
-      color: client?.color ?? colorIDFromID(tx.clientID),
-    });
-  } else {
-    await deleteCell(tx, id);
-  }
-}
+export const { list: listCells } = cellGenerated;
 
 export function idToCoords(id: string): [number, number] {
   const i = parseInt(id);
@@ -59,3 +32,25 @@ export function coordsToID(x: number, y: number): string {
 export function indexToID(i: number): string {
   return String(i).padStart(2, "0");
 }
+
+async function setCellEnabled(
+  tx: WriteTransaction,
+  { id, enabled }: { id: string; enabled: boolean }
+) {
+  if (enabled) {
+    const client = await getClient(tx, tx.clientID);
+    await cellGenerated.put(tx, {
+      id,
+      color: client?.color ?? colorIDFromID(tx.clientID),
+    });
+  } else {
+    await cellGenerated.delete(tx, id);
+  }
+}
+
+export const mutators = decorateWithAllowedRoomTypeCheck(
+  {
+    setCellEnabled,
+  },
+  RoomType.Play
+);

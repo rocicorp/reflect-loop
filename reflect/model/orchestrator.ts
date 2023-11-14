@@ -1,9 +1,16 @@
 import { generate } from "@rocicorp/rails";
 import type { ReadTransaction, WriteTransaction } from "@rocicorp/reflect";
 import * as v from "@badrap/valita";
-import { getPlayRoomID } from "./rooms";
+import {
+  RoomType,
+  getPlayRoomID,
+  getRoomTypeForRoomID,
+  getShareRoomID,
+} from "./rooms";
+import { decorateWithAllowedRoomTypeCheck } from "../auth";
 
-const MAX_CLIENTS_PER_ROOM = 5;
+const MAX_CLIENTS_PER_PLAY_ROOM = 5;
+const MAX_CLIENTS_PER_SHARE_ROOM = 50;
 const CLIENT_ROOM_ASSIGNMENT_GC_THRESHOLD_MS = 60_000;
 const CLIENT_ROOM_ASSIGNMENT_GC_INTERVAL_MS = 10_000;
 
@@ -81,11 +88,11 @@ async function updateRoomClientCount(
   }
 }
 
-// Mutators
-export async function alive(tx: WriteTransaction) {
+async function alive(tx: WriteTransaction) {
   if (tx.location !== "server") {
     return;
   }
+
   const now = Date.now();
   const clientRoomAssignmentMeta = await getClientRoomAssignmentMeta(tx);
   if (
@@ -129,12 +136,27 @@ export async function alive(tx: WriteTransaction) {
     });
     return;
   }
+  const orchRoomID = tx.auth?.roomID;
+  if (typeof orchRoomID !== "string") {
+    return;
+  }
+  const orchRoomType = getRoomTypeForRoomID(orchRoomID);
   // assign a room
   for (let roomIndex = 0, roomAssigned = false; !roomAssigned; roomIndex++) {
-    const roomID = getPlayRoomID(roomIndex);
+    const roomID =
+      orchRoomType === RoomType.ShareOrchestrator
+        ? getShareRoomID(orchRoomID, roomIndex)
+        : getPlayRoomID(roomIndex);
+    if (roomID === undefined) {
+      return;
+    }
     const room = await getRoom(tx, roomID);
     const clientCount = room?.clientCount ?? 0;
-    if (clientCount < MAX_CLIENTS_PER_ROOM) {
+    const maxClients =
+      orchRoomType === RoomType.ShareOrchestrator
+        ? MAX_CLIENTS_PER_SHARE_ROOM
+        : MAX_CLIENTS_PER_PLAY_ROOM;
+    if (clientCount < maxClients) {
       if (room === undefined) {
         await putRoom(tx, {
           id: roomID,
@@ -153,7 +175,7 @@ export async function alive(tx: WriteTransaction) {
   }
 }
 
-export async function unload(tx: WriteTransaction) {
+async function unload(tx: WriteTransaction) {
   if (tx.location !== "server") {
     return;
   }
@@ -165,3 +187,12 @@ export async function unload(tx: WriteTransaction) {
     ]);
   }
 }
+
+export const mutators = decorateWithAllowedRoomTypeCheck(
+  {
+    alive,
+    unload,
+  },
+  RoomType.PlayOrchestrator,
+  RoomType.ShareOrchestrator
+);

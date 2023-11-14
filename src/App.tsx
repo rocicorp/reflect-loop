@@ -10,7 +10,10 @@ import { Rect } from "./coordinates";
 import { getShareInfo, getShareURL } from "./share";
 import { getClientRoomAssignment } from "../reflect/model/orchestrator";
 import { randomColorID } from "../reflect/model/colors";
-import { getPlayOrchestratorRoomID } from "../reflect/model/rooms";
+import {
+  getPlayOrchestratorRoomID,
+  getShareOrchestratorRoomID,
+} from "../reflect/model/rooms";
 
 const server = import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/";
 
@@ -29,14 +32,13 @@ const clientLocation = fetch("https://reflect.net/api/get-location")
 function useRoomID() {
   const [roomID, setRoomID] = useState<string | undefined>(undefined);
   useEffect(() => {
-    if (shareInfo) {
-      setRoomID(shareInfo.roomID);
-      return;
-    }
     const orchestratorR = new Reflect<M>({
       server,
       userID: "anon",
-      roomID: getPlayOrchestratorRoomID(),
+      auth: "anon",
+      roomID: shareInfo
+        ? getShareOrchestratorRoomID(shareInfo.encodedCells)
+        : getPlayOrchestratorRoomID(),
       mutators,
     });
 
@@ -99,6 +101,7 @@ function useReflect(roomID: string | undefined) {
     const reflect = new Reflect({
       roomID: roomID ?? "local",
       userID: "anon",
+      auth: "anon-auth",
       mutators,
       server: roomID ? server : undefined,
     });

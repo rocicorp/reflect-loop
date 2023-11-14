@@ -2,41 +2,61 @@
 // will force a new orchestrator and rooms.  This can be useful if we make
 // breaking schema changes or simply want rooms with less garbage built up.
 const ROOMS_VERSION = "d";
+const SEPARATOR = "_";
 
-export enum RoomTypes {
+export enum RoomType {
   PlayOrchestrator = "playorch",
   ShareOrchestrator = "shareorch",
   Play = "play",
   Share = "share",
 }
 
+function makeID(...parts: string[]): string {
+  return [...parts, ROOMS_VERSION].join(SEPARATOR);
+}
+
 export function getPlayOrchestratorRoomID() {
-  return RoomTypes.PlayOrchestrator + "-" + ROOMS_VERSION;
+  return makeID(RoomType.PlayOrchestrator);
 }
 
 export function getShareOrchestratorRoomID(encodedCells: string) {
-  return RoomTypes.ShareOrchestrator + "-" + ROOMS_VERSION + "-" + encodedCells;
+  return makeID(RoomType.ShareOrchestrator, encodedCells);
 }
 
 export function getPlayRoomID(index: number) {
-  return RoomTypes.Play + "-" + ROOMS_VERSION + "-" + index;
+  return makeID(RoomType.Play, `i${index}`);
 }
 
-export function getShareRoomID(encodedCells: string, index: number) {
-  return RoomTypes.Share + "-" + ROOMS_VERSION + "-" + index;
+export function getShareRoomID(
+  shareOrchestratorRoomID: string,
+  index: number
+): string | undefined {
+  const roomType = getRoomTypeForRoomID(shareOrchestratorRoomID);
+  if (roomType !== RoomType.ShareOrchestrator) {
+    return undefined;
+  }
+  const lastDashIndex = shareOrchestratorRoomID.lastIndexOf("-");
+  if (lastDashIndex < 0) {
+    return undefined;
+  }
+  const encodedCells = shareOrchestratorRoomID.substring(
+    lastDashIndex,
+    shareOrchestratorRoomID.length
+  );
+  return makeID(RoomType.Share, encodedCells, `i${index}`);
 }
 
-export function getRoomType(roomID: string): RoomTypes | undefined {
-  const firstDashIndex = roomID.indexOf("-");
+export function getRoomTypeForRoomID(roomID: string): RoomType | undefined {
+  const firstDashIndex = roomID.indexOf(SEPARATOR);
   if (firstDashIndex < 0) {
     return undefined;
   }
   const type = roomID.substring(0, firstDashIndex);
   switch (type) {
-    case RoomTypes.PlayOrchestrator:
-    case RoomTypes.ShareOrchestrator:
-    case RoomTypes.Play:
-    case RoomTypes.Share:
+    case RoomType.PlayOrchestrator:
+    case RoomType.ShareOrchestrator:
+    case RoomType.Play:
+    case RoomType.Share:
       return type;
     default:
       return undefined;
