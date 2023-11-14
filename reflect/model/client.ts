@@ -31,7 +31,6 @@ const initClient = async (
   tx: WriteTransaction,
   { color }: { color: string }
 ) => {
-  console.log("init client", tx.clientID);
   const id = tx.clientID;
   const client = {
     id,
