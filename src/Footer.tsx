@@ -2,14 +2,16 @@ import "./Footer.css";
 import CreatedWithReflect from "../src/assets/created-with-reflect.svg?react";
 
 const Footer = ({
-  createShareURL,
+  ctaText,
+  createCtaURL,
   reflectUrl,
 }: {
-  createShareURL: () => Promise<string>;
+  ctaText: string;
+  createCtaURL: () => Promise<string>;
   reflectUrl: string;
 }) => {
-  const handleShare = async () => {
-    window.location.href = await createShareURL();
+  const handleCta = async () => {
+    window.location.href = await createCtaURL();
   };
   return (
     <footer className="footer">
@@ -18,8 +20,8 @@ const Footer = ({
           <CreatedWithReflect className="createdWithReflect" />
         </a>
         <div className="footer-links">
-          <a onClick={handleShare} className="footer-link primary-cta">
-            Share
+          <a onClick={handleCta} className="footer-link primary-cta">
+            {ctaText}
           </a>
         </div>
       </div>
