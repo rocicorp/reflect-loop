@@ -5,7 +5,7 @@
   left: 0px;
   transform: translate3d(0, 0, 0);
   z-index: 300;
-  transition: transform 0.04s;
+  transition: transform 250ms;
 }
 
 @media (hover: none) {
