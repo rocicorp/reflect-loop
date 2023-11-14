@@ -43,6 +43,7 @@ export default function CursorField({
     };
     const touchHandler = () => {
       void r.mutate.markAsTouchClient();
+      window.removeEventListener("touchstart", touchHandler);
     };
     window.addEventListener("touchstart", touchHandler);
     window.addEventListener("mousemove", mouseMoveHandler);
