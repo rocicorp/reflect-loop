@@ -13,7 +13,7 @@ export async function getShareURL(r: Reflect<M> | undefined) {
   return url.toString();
 }
 
-export function getFixedCellInfo() {
+export function getShareInfo() {
   const url = new URL(location.href);
   const encoded = url.searchParams.get("s");
   if (!encoded) {

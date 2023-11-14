@@ -1,11 +1,5 @@
 import "./App.css";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Grid from "./Grid";
 import Footer from "./Footer";
 import LoopLogo from "../src/assets/loop-logo.svg?react";
@@ -17,12 +11,12 @@ import {
   ORCHESTRATOR_ROOM,
   getClientRoomAssignment,
 } from "../reflect/model/orchestrator";
-import { getFixedCellInfo, getShareURL } from "./share";
+import { getShareInfo, getShareURL } from "./share";
 import { randomColorID } from "../reflect/model/colors";
 
 const server = import.meta.env.VITE_REFLECT_SERVER ?? "http://127.0.0.1:8080/";
 
-const fixedCellInfo = getFixedCellInfo();
+const shareInfo = getShareInfo();
 const clientColor = randomColorID();
 const clientLocation = fetch("https://reflect.net/api/get-location")
   .then((resp) => resp.json())
@@ -37,8 +31,8 @@ const clientLocation = fetch("https://reflect.net/api/get-location")
 function useRoomID() {
   const [roomID, setRoomID] = useState<string | undefined>(undefined);
   useEffect(() => {
-    if (fixedCellInfo) {
-      setRoomID(fixedCellInfo.roomID);
+    if (shareInfo) {
+      setRoomID(shareInfo.roomID);
       return;
     }
     const orchestratorR = new Reflect<M>({
@@ -178,6 +172,13 @@ function useElementSize<T extends Element>(deps: unknown[]) {
   return [ref, rect] as const;
 }
 
+const createPlayURL = () => {
+  const url = new URL(location.href);
+  url.search = "";
+  url.pathname = "";
+  return Promise.resolve(url.toString());
+};
+
 const App: React.FC = () => {
   const roomID = useRoomID();
   const r = useReflect(roomID);
@@ -192,16 +193,17 @@ const App: React.FC = () => {
     );
   }, [windowSize]);
 
-  const createShareURL = useCallback(() => {
+  const createShareURL = () => {
     return getShareURL(r);
-  }, [r]);
+  };
 
   return (
     <div className="App" ref={appRef}>
       <LoopLogo className="loopLogo" />
-      <Grid r={r} fixedCells={roomID ? fixedCellInfo?.cells : {}} />
+      <Grid r={r} fixedCells={roomID ? shareInfo?.cells : {}} />
       <Footer
-        createShareURL={createShareURL}
+        ctaText={shareInfo ? "Play" : "Share"}
+        createCtaURL={shareInfo ? createPlayURL : createShareURL}
         reflectUrl="https://reflect.net"
       />
       {appRect && docRect && r ? (
