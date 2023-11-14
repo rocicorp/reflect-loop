@@ -16,8 +16,8 @@ import { getShareInfo, getShareURL } from "./share";
 import { getClientRoomAssignment } from "../reflect/model/orchestrator";
 import { randomColorID } from "../reflect/model/colors";
 import { getOrchstratorRoomID } from "../reflect/model/rooms";
-import { SHARE_M, shareMutators } from "../reflect/share/mutators";
-import { PLAY_M, playMutators } from "../reflect/play/mutators";
+import { shareMutators } from "../reflect/share/mutators";
+import { playMutators } from "../reflect/play/mutators";
 import { orchestratorMutators } from "../reflect/orchestrator/mutators";
 import { Room } from "./room";
 
@@ -115,47 +115,49 @@ function useRoom(roomID: string | undefined) {
   const [room, setRoom] = useState<Room>();
 
   useEffect(() => {
-    let toClose: Reflect<PLAY_M | SHARE_M>;
+    let room: Room;
     if (roomID === undefined) {
-      const r = new Reflect({
-        roomID: "local",
-        userID: "anon",
-        mutators: shareMutators,
-        server: undefined,
-      });
-      toClose = r;
-      setRoom({
+      room = {
         type: "share",
-        r,
+        r: new Reflect({
+          roomID: "local",
+          userID: "anon",
+          mutators: shareMutators,
+          server: undefined,
+        }),
         fixedCells: {},
-      });
+      };
     } else if (shareInfo !== undefined) {
-      const r = new Reflect({
-        roomID,
-        userID: "anon",
-        mutators: shareMutators,
-        server: shareServer,
-      });
-      toClose = r;
-      setRoom({
+      room = {
         type: "share",
-        r,
+        r: new Reflect({
+          roomID,
+          userID: "anon",
+          mutators: shareMutators,
+          server: shareServer,
+        }),
         fixedCells: shareInfo.cells,
-      });
+      };
     } else {
-      const r = new Reflect({
-        roomID,
-        userID: "anon",
-        mutators: playMutators,
-        server: playServer,
-      });
-      toClose = r;
-      setRoom({
+      room = {
         type: "play",
-        r,
-      });
+        r: new Reflect({
+          roomID,
+          userID: "anon",
+          mutators: playMutators,
+          server: playServer,
+        }),
+      };
     }
-    toClose.onUpdateNeeded = (reason) => {
+
+    void room.r.mutate.initClient({ color: clientColor });
+    clientLocation.then(async (loc) => {
+      if (loc && !room.r.closed) {
+        void room.r.mutate.updateLocation(loc);
+      }
+    });
+
+    room.r.onUpdateNeeded = (reason) => {
       if (reason.type !== "NewClientGroup") {
         location.reload();
       }
@@ -163,7 +165,7 @@ function useRoom(roomID: string | undefined) {
 
     return () => {
       setRoom(undefined);
-      void toClose.close();
+      void room.r.close();
     };
   }, [roomID]);
 
