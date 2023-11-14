@@ -105,31 +105,6 @@ function useRoom(roomID: string | undefined) {
   useEffect(() => {
     let room: Room;
 
-    const reflect =
-      roomID === undefined
-        ? new Reflect({
-            roomID: "local",
-            userID: "anon",
-            mutators: shareMutators,
-            server: undefined,
-          })
-        : shareInfo === undefined
-        ? new Reflect({
-            roomID,
-            userID: "anon",
-            mutators: playMutators,
-            server: playServer,
-          })
-        : new Reflect({
-            roomID,
-            userID: "anon",
-            mutators: shareMutators,
-            server: shareServer,
-          });
-    void reflect.mutate.initClient({
-      color: clientColor,
-    });
-
     if (roomID === undefined) {
       room = {
         type: "share",
