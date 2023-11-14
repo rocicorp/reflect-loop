@@ -157,12 +157,7 @@ function useRoom(roomID: string | undefined) {
       }
     });
 
-    room.r.onUpdateNeeded = (reason) => {
-      if (reason.type !== "NewClientGroup") {
-        location.reload();
-      }
-    };
-
+    setRoom(room);
     return () => {
       setRoom(undefined);
       void room.r.close();
