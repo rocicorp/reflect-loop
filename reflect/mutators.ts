@@ -1,16 +1,11 @@
-import { setCellEnabled } from "./model/cell";
-import { initClient, updateCursor, updateLocation } from "./model/client";
-import { alive, unload } from "./model/orchestrator";
+import { mutators as cellMutators } from "./model/cell";
+import { mutators as clientMutators } from "./model/client";
+import { mutators as orchestratorMutators } from "./model/orchestrator";
 
 export type M = typeof mutators;
 
 export const mutators = {
-  setCellEnabled,
-  initClient,
-  updateCursor,
-  updateLocation,
-
-  // orchestrator mutators
-  alive,
-  unload,
+  ...cellMutators,
+  ...clientMutators,
+  ...orchestratorMutators,
 };

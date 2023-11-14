@@ -33,5 +33,5 @@ export function getShareInfo() {
     const color = part.substring(2);
     cells[cellID] = { id: cellID, color };
   }
-  return { roomID: encoded, cells };
+  return { encodedCells: encoded, cells };
 }
