@@ -102,7 +102,7 @@ function useReflect(roomID: string | undefined) {
       roomID: roomID ?? "local",
       userID: "anon",
       mutators,
-      server: server ?? undefined,
+      server: roomID ? server : undefined,
     });
     void reflect.mutate.initClient({
       color: clientColor,
