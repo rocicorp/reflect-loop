@@ -1,4 +1,4 @@
-# Loops
+# Loop
 
 # Installation & Setup: Local
 1. Clone repo
