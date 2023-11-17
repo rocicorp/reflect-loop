@@ -13,6 +13,7 @@ import PresenceBar from "./PresenceBar";
 import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors";
 import { Room } from "./room";
+import { ShareInfo } from "./share";
 
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
@@ -56,7 +57,13 @@ class SourceNode {
   }
 }
 
-function Grid({ room }: { room: Room | undefined }) {
+function Grid({
+  room,
+  shareInfo,
+}: {
+  room: Room;
+  shareInfo: ShareInfo | undefined;
+}) {
   const selfColor = useSelfColor(room?.r);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
@@ -299,7 +306,8 @@ function Grid({ room }: { room: Room | undefined }) {
   );
 
   const enabledCells =
-    room?.type === "share" ? room.fixedCells : enabledCellsFromSubscribe;
+    shareInfo?.cells ??
+    (room?.type === "share" ? room.fixedCells : enabledCellsFromSubscribe);
 
   const sources = useRef<Record<string, SourceNode>>({});
 
@@ -334,6 +342,7 @@ function Grid({ room }: { room: Room | undefined }) {
             analyser
           );
           const gain = source.gain;
+
           gain.setValueAtTime(0, 0);
           gain.setTargetAtTime(activeTargetGain, audioContext.currentTime, 0.2);
           source.start(0, audioContext.currentTime % audioBuffers[0].duration);
