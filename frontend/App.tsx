@@ -12,7 +12,7 @@ import { shareMutators } from "../reflect/share/mutators";
 import { playMutators } from "../reflect/play/mutators";
 import { orchestratorMutators } from "../reflect/orchestrator/mutators";
 import { Room } from "./room";
-import { LoopLogo } from "./LoopLogo";
+import LoopLogo from "./LoopLogo";
 
 const orchestratorServer =
   process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER ?? "http://127.0.0.1:8080/";
