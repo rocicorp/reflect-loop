@@ -22,6 +22,26 @@ export default function Home({
     <>
       <Head>
         <title>Loop | Reflect</title>
+        {/* Facebook Meta Tags */}
+        <meta property="og:url" content="loop.reflect.net" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Loop | Reflect" />
+        <meta
+          property="og:title"
+          content="Loop: High-performance beats for the multiplayer web."
+        />
+        <meta
+          property="og:description"
+          content="Loop: High-performance beats for the multiplayer web."
+        />
+        <meta
+          property="og:image"
+          content={
+            shareInfo
+              ? `https://loop.reflect.net/api/og?s=${shareInfo.encodedCells}`
+              : `https://loop.reflect.net/api/og?s=076-118-126-208-218-226-253-288-298-333-483-503-523-586-613`
+          }
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <App shareInfo={shareInfo} />
