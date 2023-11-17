@@ -32,7 +32,7 @@ export default function Home({
         />
         <meta
           property="og:description"
-          content="Loop: High-performance beats for the multiplayer web."
+          content="2^64 possibilities for your listening pleasure."
         />
         <meta
           property="og:image"
