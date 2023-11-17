@@ -1,5 +1,5 @@
 import type { ReflectServerOptions } from "@rocicorp/reflect/server";
-import { M, mutators } from "./mutators.js";
+import { M, mutators } from "./mutators";
 
 function makeOptions(): ReflectServerOptions<M> {
   return {

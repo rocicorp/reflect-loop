@@ -1,5 +1,5 @@
 import type { ReflectServerOptions } from "@rocicorp/reflect/server";
-import { ORCH_M, orchestratorMutators } from "./mutators.js";
+import { ORCH_M, orchestratorMutators } from "./mutators";
 
 function makeOptions(): ReflectServerOptions<ORCH_M> {
   return {

@@ -46,18 +46,14 @@
   pointer-events: none;
 }
 
-.cell-hovered > .cellHighlight {
+.cellHovered > .cellHighlight {
   opacity: 0.7;
 }
 
 @media (hover: none) {
-  .cell-hovered > .cellHighlight {
+  .cellHovered > .cellHighlight {
     transform: scale(2);
   }
-}
-
-.cell.queued {
-  animation: pulse 1.5s infinite;
 }
 
 .waveform {

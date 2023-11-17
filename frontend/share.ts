@@ -14,9 +14,14 @@ export async function getShareURL(r: Reflect<PLAY_M | SHARE_M> | undefined) {
   return url.toString();
 }
 
-export function getShareInfo() {
-  const url = new URL(location.href);
-  const encoded = url.searchParams.get("s");
+export type ShareInfo = {
+  encodedCells: string;
+  cells: Record<string, Cell>;
+};
+
+export function getShareInfo(
+  encoded: string | undefined
+): ShareInfo | undefined {
   if (!encoded) {
     return;
   }
