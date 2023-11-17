@@ -15,6 +15,7 @@
     "@badrap/valita": "^0.3.0",
     "@rocicorp/rails": "^0.7.1",
     "@rocicorp/reflect": "^0.38.202311130825",
+    "@vercel/og": "^0.5.20",
     "classnames": "^2.3.2",
     "next": "^14.0.3",
     "react": "^18.2.0",
