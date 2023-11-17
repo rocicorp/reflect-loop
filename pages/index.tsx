@@ -21,7 +21,7 @@ export default function Home({
   return (
     <>
       <Head>
-        <title>{JSON.stringify(shareInfo)}</title>
+        <title>Loop | Reflect</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
       <App shareInfo={shareInfo} />
