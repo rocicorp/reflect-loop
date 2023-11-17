@@ -1,8 +1,8 @@
 import type { Reflect } from "@rocicorp/reflect/client";
 import { usePresence, useSubscribe } from "@rocicorp/reflect/react";
-import { Client, getClient } from "./model/client.js";
-import { PLAY_M } from "./play/mutators.js";
-import { SHARE_M } from "./share/mutators.js";
+import { Client, getClient } from "./model/client";
+import { PLAY_M } from "./play/mutators";
+import { SHARE_M } from "./share/mutators";
 
 export function useSelfColor(r: Reflect<PLAY_M | SHARE_M> | undefined) {
   return useSubscribe(

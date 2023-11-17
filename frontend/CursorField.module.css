@@ -7,16 +7,16 @@
   z-index: 300;
 }
 
-.cursor-touch {
+.cursorTouch {
   transition: transform 100ms;
 }
 
-.cursor-self {
+.cursorSelf {
   transition: none;
 }
 
 @media (hover: none) {
-  .cursor-self {
+  .cursorSelf {
     display: none;
   }
 }

@@ -1,0 +1,37 @@
+.loopLogo {
+  margin-bottom: 2rem;
+}
+
+.loopLogo path {
+  animation: colorChange 40s infinite alternate;
+}
+
+@keyframes logoSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes colorChange {
+  0% {
+    fill: #fc49ab;
+  }
+  20% {
+    fill: #5fe8ff;
+  }
+  40% {
+    fill: #ff9900;
+  }
+  60% {
+    fill: #64ff00;
+  }
+  80% {
+    fill: #eb0aff;
+  }
+  100% {
+    fill: #edc804;
+  }
+}

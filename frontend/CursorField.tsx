@@ -1,18 +1,18 @@
-import "./CursorField.css";
+import styles from "./CursorField.module.css";
 import { Reflect } from "@rocicorp/reflect/client";
 import { useEffect } from "react";
-import { usePresentClients } from "../reflect/subscriptions.js";
+import { usePresentClients } from "../reflect/subscriptions";
 import {
   Rect,
   coordinateToPosition,
   positionToCoordinate,
-} from "./coordinates.js";
-import { displayStringForLocation } from "./location.js";
-import { Client } from "../reflect/model/client.js";
+} from "./coordinates";
+import { displayStringForLocation } from "./location";
+import { Client } from "../reflect/model/client";
 import { ClientID } from "@rocicorp/reflect";
 import classNames from "classnames";
-import { colorStringForColorID } from "../reflect/model/colors.js";
-import { SHARE_M } from "../reflect/share/mutators.js";
+import { colorStringForColorID } from "../reflect/model/colors";
+import { SHARE_M } from "../reflect/share/mutators";
 
 export default function CursorField({
   r,
@@ -88,9 +88,9 @@ function Cursor({
   const cursorCoordinates = coordinateToPosition(cursor, appRect, docRect);
   return (
     <div
-      className={classNames("cursor", {
-        "cursor-self": client.id === selfClientID,
-        "cursor-touch": client.isTouch,
+      className={classNames(styles.cursor, {
+        [styles.cursorSelf]: client.id === selfClientID,
+        [styles.cursorTouch]: client.isTouch,
       })}
       style={{
         transform: `translate3d(${cursorCoordinates.x}px, ${cursorCoordinates.y}px, 0)`,
@@ -113,12 +113,12 @@ function Cursor({
         </svg>
       }
       <div
-        className="location"
+        className={styles.location}
         style={{
           backgroundColor: colorString,
         }}
       >
-        <div className="location-name">
+        <div className={styles.locationName}>
           {displayStringForLocation(location)}
         </div>
       </div>

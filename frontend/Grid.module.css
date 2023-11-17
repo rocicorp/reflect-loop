@@ -46,18 +46,14 @@
   pointer-events: none;
 }
 
-.cell-hovered > .cellHighlight {
+.cellHovered > .cellHighlight {
   opacity: 0.7;
 }
 
 @media (hover: none) {
-  .cell-hovered > .cellHighlight {
+  .cellHovered > .cellHighlight {
     transform: scale(2);
   }
-}
-
-.cell.queued {
-  animation: pulse 1.5s infinite;
 }
 
 .waveform {
@@ -65,6 +61,7 @@
   margin: 20px auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
+  width: 444px;
 }
 
 /* Responsive 📱 */

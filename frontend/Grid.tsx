@@ -1,4 +1,4 @@
-import "./Grid.css";
+import styles from "./Grid.module.css";
 import { useEffect, useRef, useState, PointerEvent } from "react";
 import {
   coordsToID,
@@ -8,11 +8,11 @@ import {
   NUM_CELLS,
 } from "../reflect/model/cell";
 import { useSubscribe } from "replicache-react";
-import { useSelfColor } from "../reflect/subscriptions.js";
-import PresenceBar from "./PresenceBar.js";
+import { useSelfColor } from "../reflect/subscriptions";
+import PresenceBar from "./PresenceBar";
 import classNames from "classnames";
-import { colorStringForColorID } from "../reflect/model/colors.js";
-import { Room } from "./room.js";
+import { colorStringForColorID } from "../reflect/model/colors";
+import { Room } from "./room";
 
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
@@ -63,13 +63,8 @@ function Grid({ room }: { room: Room | undefined }) {
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const audioContextRef = useRef(new window.AudioContext());
-  const analyserRef = useRef<AnalyserNode>(
-    audioContextRef.current.createAnalyser()
-  );
-
-  const bufferLength = analyserRef.current.frequencyBinCount;
-  const dataArray = new Uint8Array(bufferLength);
+  const audioContextRef = useRef<AudioContext>();
+  const analyserRef = useRef<AnalyserNode>();
 
   const audioSamples = [
     "/samples/row-1-sample-1.mp3",
@@ -139,11 +134,11 @@ function Grid({ room }: { room: Room | undefined }) {
   ];
 
   useEffect(() => {
-    analyserRef.current.connect(audioContextRef.current.destination);
-  }, []);
-
-  useEffect(() => {
-    const audioContext = audioContextRef.current;
+    const audioContext = new AudioContext();
+    audioContextRef.current = audioContext;
+    const analyser = audioContext.createAnalyser();
+    analyserRef.current = analyser;
+    analyser.connect(audioContext.destination);
     setAudioInitialized(audioContext.state === "running");
     const handler = () => {
       setAudioInitialized(audioContext.state === "running");
@@ -153,6 +148,8 @@ function Grid({ room }: { room: Room | undefined }) {
       audioContext.removeEventListener("statechange", handler);
     };
   }, []);
+
+  useEffect(() => {}, []);
 
   // This enables audio on click.
   useEffect(() => {
@@ -165,6 +162,9 @@ function Grid({ room }: { room: Room | undefined }) {
         return;
       }
       const audioContext = audioContextRef.current;
+      if (!audioContext) {
+        return;
+      }
 
       const buffer = audioContext.createBuffer(1, 1, 22050); // 1/10th of a second of silence
       const source = audioContext.createBufferSource();
@@ -203,6 +203,14 @@ function Grid({ room }: { room: Room | undefined }) {
   }, [audioInitialized]);
 
   const drawWaveform = () => {
+    const audioContext = audioContextRef.current;
+    const analyser = analyserRef.current;
+    if (!audioContext || !analyser) {
+      return;
+    }
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
     if (!canvasRef.current) return;
 
     const canvas = canvasRef.current;
@@ -215,7 +223,7 @@ function Grid({ room }: { room: Room | undefined }) {
     gradient.addColorStop(0.5, "yellow");
     gradient.addColorStop(1, "green");
 
-    analyserRef.current.getByteTimeDomainData(dataArray);
+    analyser.getByteTimeDomainData(dataArray);
 
     canvasCtx.fillStyle = "rgb(0, 0, 0)";
     canvasCtx.fillRect(0, 0, width, height);
@@ -245,7 +253,7 @@ function Grid({ room }: { room: Room | undefined }) {
     // Loop progress bar
     if (audioBuffers.length > 0 && audioBuffers[0].duration) {
       const progress =
-        (audioContextRef.current.currentTime % audioBuffers[0].duration) /
+        (audioContext.currentTime % audioBuffers[0].duration) /
         audioBuffers[0].duration;
       const progressBarWidth = progress * width;
       canvasCtx.fillStyle = "rgba(255, 255, 255, 0.1)";
@@ -260,12 +268,12 @@ function Grid({ room }: { room: Room | undefined }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canvasRef.current, redrawTrigger]);
 
-  const loadAudioSamples = async () => {
+  const loadAudioSamples = async (audioContext: AudioContext) => {
     const buffers = await Promise.all(
       audioSamples.map(async (url) => {
         const response = await fetch(url);
         const arrayBuffer = await response.arrayBuffer();
-        return audioContextRef.current.decodeAudioData(arrayBuffer);
+        return audioContext.decodeAudioData(arrayBuffer);
       })
     );
     setAudioBuffers(buffers);
@@ -274,9 +282,12 @@ function Grid({ room }: { room: Room | undefined }) {
   };
 
   useEffect(() => {
-    loadAudioSamples();
+    const audioContext = audioContextRef.current;
+    if (audioContext) {
+      loadAudioSamples(audioContext);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [audioContextRef.current]);
 
   const enabledCellsFromSubscribe = useSubscribe(
     room?.r,
@@ -293,14 +304,12 @@ function Grid({ room }: { room: Room | undefined }) {
   const sources = useRef<Record<string, SourceNode>>({});
 
   useEffect(() => {
-    if (!audioBuffers.length) {
+    const audioContext = audioContextRef.current;
+    const analyser = analyserRef.current;
+    if (!audioBuffers.length || !audioContext || !analyser) {
       return;
     }
 
-    // loop through each row
-    // if there is an add, add it and set to play at same time, and set any deletes to stop at that time too
-    // else if there is a delete just stop it
-    const audioCtx = audioContextRef.current;
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
         const id = coordsToID(x, y);
@@ -314,30 +323,27 @@ function Grid({ room }: { room: Room | undefined }) {
         if (active) {
           source.gain.setTargetAtTime(
             activeTargetGain,
-            audioCtx.currentTime,
+            audioContext.currentTime,
             0.2
           );
         }
         if (added) {
           const source = new SourceNode(
-            audioCtx,
+            audioContext,
             audioBuffers[parseInt(id) % audioBuffers.length],
-            analyserRef.current
+            analyser
           );
           const gain = source.gain;
-
-          // connect the AudioBufferSourceNode to the gainNode
-          // and the gainNode to the destination
           gain.setValueAtTime(0, 0);
-          gain.setTargetAtTime(activeTargetGain, audioCtx.currentTime, 0.2);
-          source.start(0, audioCtx.currentTime % audioBuffers[0].duration);
+          gain.setTargetAtTime(activeTargetGain, audioContext.currentTime, 0.2);
+          source.start(0, audioContext.currentTime % audioBuffers[0].duration);
 
           sources.current[id] = source;
         }
         if (deleted) {
           const source = sources.current[id];
-          source.gain.setTargetAtTime(0, audioCtx.currentTime, 0.2);
-          source.stop(audioCtx.currentTime + 1);
+          source.gain.setTargetAtTime(0, audioContext.currentTime, 0.2);
+          source.stop(audioContext.currentTime + 1);
           setTimeout(() => {
             source.disconnect();
           }, 5000);
@@ -397,31 +403,37 @@ function Grid({ room }: { room: Room | undefined }) {
 
   return (
     <div>
-      <div className="presenceContainer">
-        <p className={`audioStartMessage ${audioInitialized ? "hidden" : ""}`}>
+      <div className={styles.presenceContainer}>
+        <p
+          className={classNames(styles.audioStartMessage, {
+            [styles.hidden]: audioInitialized,
+          })}
+        >
           Click or tap anywhere to start audio 🔊
         </p>
         <div
-          className={`presenceBarContainer ${audioInitialized ? "" : "hidden"}`}
+          className={classNames(styles.presenceBarContainer, {
+            [styles.hidden]: !audioInitialized,
+          })}
         >
           <PresenceBar r={room?.r} />
         </div>
       </div>
       <canvas
         ref={canvasRef}
-        className="waveform"
+        className={styles.waveform}
         width="444"
         height="64"
       ></canvas>
-      <div className="grid">
+      <div className={styles.grid}>
         {new Array(NUM_CELLS).fill(null).map((_, i) => {
           const id = indexToID(i);
           return (
             <div
               key={id}
               id={id}
-              className={classNames("cell", {
-                "cell-hovered": id === hoveredID,
+              className={classNames(styles.cell, {
+                [styles.cellHovered]: id === hoveredID,
               })}
               style={
                 enabledCells[id]
@@ -443,7 +455,7 @@ function Grid({ room }: { room: Room | undefined }) {
               onClick={() => handleClick?.(id)}
             >
               <div
-                className="cellHighlight"
+                className={styles.cellHighlight}
                 style={
                   selfColor
                     ? { backgroundColor: colorStringForColorID(selfColor) }
