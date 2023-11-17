@@ -87,7 +87,7 @@ function Cursor({
   );
 }
 
-function LoopLogo({}) {
+function LoopLogo() {
   return (
     <svg
       width="176"
