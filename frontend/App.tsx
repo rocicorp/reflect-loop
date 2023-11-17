@@ -239,7 +239,7 @@ const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
   return (
     <div ref={appRef}>
       <LoopLogo />
-      <Grid room={room} />
+      <Grid room={room} shareInfo={shareInfo} />
       <Footer
         ctaText={shareInfo ? "Play" : "Share"}
         createCtaURL={shareInfo ? createPlayURL : createShareURL}
