@@ -13,6 +13,7 @@ import { playMutators } from "../reflect/play/mutators";
 import { orchestratorMutators } from "../reflect/orchestrator/mutators";
 import { Room } from "./room";
 import LoopLogo from "./LoopLogo";
+import ShareModal from "./ShareModal";
 
 const orchestratorServer =
   process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER ?? "http://127.0.0.1:8080/";
@@ -224,6 +225,8 @@ const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
   const [appRef, appRect] = useElementSize<HTMLDivElement>([windowSize]);
   const [docRect, setDocRect] = useState<Rect | null>(null);
 
+  const [isModalOpen, setModalOpen] = useState(false);
+
   useEffect(() => {
     setDocRect(
       new Rect(0, 0, document.body.scrollWidth, document.body.scrollHeight)
@@ -241,10 +244,12 @@ const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
       <LoopLogo />
       <Grid room={room} shareInfo={shareInfo} />
       <Footer
-        ctaText={shareInfo ? "Play" : "Share"}
+        onOpenModal={() => setModalOpen(true)}
+        ctaText={shareInfo ? "Create new" : "Create new"}
         createCtaURL={shareInfo ? createPlayURL : createShareURL}
         reflectUrl="https://reflect.net"
       />
+      <ShareModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
       {room && appRect && docRect ? (
         <CursorField r={room.r} appRect={appRect} docRect={docRect} />
       ) : null}

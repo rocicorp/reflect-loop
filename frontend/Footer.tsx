@@ -6,10 +6,12 @@ const Footer = ({
   ctaText,
   createCtaURL,
   reflectUrl,
+  onOpenModal,
 }: {
   ctaText: string;
   createCtaURL: () => Promise<string>;
   reflectUrl: string;
+  onOpenModal: () => void;
 }) => {
   const handleCta = async () => {
     window.location.href = await createCtaURL();
@@ -23,17 +25,20 @@ const Footer = ({
             src="/created-with-reflect.svg"
             width={142}
             height={56}
-            className="createdWithReflect"
+            className={styles.createdWithReflect}
             priority={true}
           />
         </a>
         <div className={styles.footerLinks}>
-          <a
+          <button onClick={onOpenModal} className={styles.footerShare}>
+            Share
+          </button>
+          <button
             onClick={handleCta}
             className={classNames(styles.footerLink, styles.primaryCta)}
           >
             {ctaText}
-          </a>
+          </button>
         </div>
       </div>
     </footer>

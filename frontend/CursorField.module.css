@@ -13,6 +13,7 @@
 
 .cursorSelf {
   transition: none;
+  z-index: 9999;
 }
 
 @media (hover: none) {
