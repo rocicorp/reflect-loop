@@ -1,14 +1,25 @@
 import React, { useEffect, useRef } from "react";
 import styles from "./ShareModal.module.css";
 import Image from "next/image";
+import { MaybePromise } from "@rocicorp/reflect";
+import { ShareType } from "./share";
 
-interface ModalProps {
+const Modal = ({
+  isOpen,
+  onClose,
+  createShareURL,
+}: {
   isOpen: boolean;
   onClose: () => void;
-}
-
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
+  createShareURL: (type: ShareType) => MaybePromise<string>;
+}) => {
   const modalRef = useRef<HTMLDivElement>(null);
+
+  const copyShareAndClose = async (type: ShareType) => {
+    const url = await createShareURL(type);
+    navigator.clipboard.writeText(url);
+    onClose();
+  };
 
   // Close the modal if clicked outside of it
   useEffect(() => {
@@ -47,7 +58,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
               className={styles.shareOptionVisual}
             />
             <p>Current state, read only.</p>
-            <button className={styles.shareCta}>Copy Link</button>
+            <button
+              className={styles.shareCta}
+              onClick={() => {
+                copyShareAndClose("snapshot");
+              }}
+            >
+              Copy Link
+            </button>
           </div>
           <div className={styles.shareOption}>
             <h3 className={styles.shareOptionTitle}>Collaborate</h3>
@@ -59,7 +77,14 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose }) => {
               className={styles.shareOptionVisual}
             />
             <p>Viewers can edit, collaborate.</p>
-            <button className={styles.shareCta}>Copy Link</button>
+            <button
+              className={styles.shareCta}
+              onClick={() => {
+                copyShareAndClose("collaborate");
+              }}
+            >
+              Copy Link
+            </button>
           </div>
         </div>
       </div>

@@ -1,20 +1,22 @@
 import classNames from "classnames";
 import styles from "./Footer.module.css";
 import Image from "next/image";
+import { MaybePromise } from "@rocicorp/reflect";
 
 const Footer = ({
   ctaText,
   createCtaURL,
   reflectUrl,
-  onOpenModal,
+  onShare,
 }: {
   ctaText: string;
-  createCtaURL: () => Promise<string>;
+  createCtaURL: () => MaybePromise<string>;
   reflectUrl: string;
-  onOpenModal: () => void;
+  onShare: (() => void) | undefined;
 }) => {
   const handleCta = async () => {
-    window.location.href = await createCtaURL();
+    const url = await createCtaURL();
+    window.location.href = url;
   };
   return (
     <footer className={styles.footer}>
@@ -30,9 +32,11 @@ const Footer = ({
           />
         </a>
         <div className={styles.footerLinks}>
-          <button onClick={onOpenModal} className={styles.footerShare}>
-            Share
-          </button>
+          {onShare ? (
+            <button onClick={onShare} className={styles.footerShare}>
+              Share
+            </button>
+          ) : null}
           <button
             onClick={handleCta}
             className={classNames(styles.footerLink, styles.primaryCta)}

@@ -5,9 +5,11 @@ import { getShareInfo } from "../frontend/share";
 
 export const getServerSideProps = (async (context) => {
   const s = context.query["s"];
+  const r = context.query["r"];
   return {
     props: {
       s: (Array.isArray(s) ? s[0] : s) ?? "",
+      r: (Array.isArray(r) ? r[0] : r) ?? "",
     },
   };
 }) satisfies GetServerSideProps<{
@@ -16,8 +18,9 @@ export const getServerSideProps = (async (context) => {
 
 export default function Home({
   s,
+  r,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const shareInfo = getShareInfo(s);
+  const shareInfo = getShareInfo(s, r);
   return (
     <>
       <Head>
