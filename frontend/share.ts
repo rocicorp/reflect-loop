@@ -2,26 +2,65 @@ import { Reflect } from "@rocicorp/reflect/client";
 import { Cell, listCells } from "../reflect/model/cell";
 import { PLAY_M } from "../reflect/play/mutators";
 import { SHARE_M } from "../reflect/share/mutators";
+import { getRandomPlayRoomID } from "../reflect/model/rooms";
 
-export async function getShareURL(r: Reflect<PLAY_M | SHARE_M> | undefined) {
+export type ShareType = "snapshot" | "collaborate";
+
+export async function getShareURL(
+  r: Reflect<PLAY_M | SHARE_M>,
+  config:
+    | { type: "snapshot" }
+    | { type: "collaborate"; preferredRoomID: string | undefined }
+) {
   const url = new URL(window.location.href);
-  if (r) {
-    const cellsEncoded = (await r.query(listCells))
-      .map((cell) => `${cell.id}${cell.color}`)
-      .join("-");
-    url.search = `s=${cellsEncoded}`;
+  const cellsEncoded = (await r.query(listCells))
+    .map((cell) => `${cell.id}${cell.color}`)
+    .join("-");
+  url.searchParams.set("s", cellsEncoded);
+  if (config.type === "collaborate") {
+    url.searchParams.set("r", config.preferredRoomID ?? getRandomPlayRoomID());
   }
   return url.toString();
 }
 
-export type ShareInfo = {
-  encodedCells: string;
-  cells: Record<string, Cell>;
-};
+export type ShareInfo =
+  | {
+      type: "snapshot";
+      encodedCells: string;
+      cells: Record<string, Cell>;
+    }
+  | {
+      type: "collaborate";
+      encodedCells: string;
+      cells: Record<string, Cell>;
+      preferredRoomID: string;
+    };
 
 export function getShareInfo(
-  encoded: string | undefined
+  encodedCells: string | undefined,
+  preferredRoomID: string | undefined
 ): ShareInfo | undefined {
+  if (!encodedCells && !preferredRoomID) {
+    return;
+  }
+  const cells = decodeCells(encodedCells) ?? {};
+  if (preferredRoomID) {
+    return {
+      type: "collaborate",
+      encodedCells: encodedCells ?? "",
+      cells: cells,
+      preferredRoomID,
+    };
+  } else {
+    return {
+      type: "snapshot",
+      encodedCells: encodedCells ?? "",
+      cells: cells,
+    };
+  }
+}
+
+function decodeCells(encoded: string | undefined) {
   if (!encoded) {
     return;
   }
@@ -39,5 +78,5 @@ export function getShareInfo(
     const color = part.substring(2);
     cells[cellID] = { id: cellID, color };
   }
-  return { encodedCells: encoded, cells };
+  return cells;
 }

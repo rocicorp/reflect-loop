@@ -4,10 +4,13 @@ import Footer from "./Footer";
 import { Reflect } from "@rocicorp/reflect/client";
 import CursorField from "./CursorField";
 import { Rect } from "./coordinates";
-import { ShareInfo, getShareURL } from "./share";
+import { ShareInfo, ShareType, getShareURL } from "./share";
 import { getClientRoomAssignment } from "../reflect/model/orchestrator";
 import { randomColorID } from "../reflect/model/colors";
-import { getOrchstratorRoomID } from "../reflect/model/rooms";
+import {
+  getOrchstratorRoomID,
+  getRandomPlayRoomID,
+} from "../reflect/model/rooms";
 import { shareMutators } from "../reflect/share/mutators";
 import { playMutators } from "../reflect/play/mutators";
 import { orchestratorMutators } from "../reflect/orchestrator/mutators";
@@ -51,10 +54,12 @@ function useRoomID(shareInfo: ShareInfo | undefined) {
       if (document.visibilityState === "visible") {
         void orchestratorR.mutate.alive(
           shareInfo
-            ? {
-                type: "share",
-                encodedCells: shareInfo.encodedCells,
-              }
+            ? shareInfo.type === "collaborate"
+              ? { type: "play", preferredRoomID: shareInfo.preferredRoomID }
+              : {
+                  type: "share",
+                  encodedCells: shareInfo.encodedCells,
+                }
             : { type: "play" }
         );
       }
@@ -106,7 +111,7 @@ function useRoom(shareInfo: ShareInfo | undefined, roomID: string | undefined) {
         }),
         fixedCells: {},
       };
-    } else if (shareInfo !== undefined) {
+    } else if (shareInfo?.type === "snapshot") {
       room = {
         type: "share",
         r: new Reflect({
@@ -214,7 +219,15 @@ const createPlayURL = () => {
   const url = new URL(location.href);
   url.search = "";
   url.pathname = "";
-  return Promise.resolve(url.toString());
+  return url.toString();
+};
+
+const createNewURL = () => {
+  const url = new URL(location.href);
+  url.search = "";
+  url.pathname = "";
+  url.searchParams.set("r", getRandomPlayRoomID());
+  return url.toString();
 };
 
 const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
@@ -233,23 +246,38 @@ const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
     );
   }, [windowSize]);
 
-  const createShareURL = () => {
-    if (room === undefined || room.type === "share") {
+  const createShareURL = async (type: ShareType) => {
+    if (!room) {
       return createPlayURL();
     }
-    return getShareURL(room.r);
+    if (type === "snapshot") {
+      return getShareURL(room.r, { type });
+    }
+    return getShareURL(room.r, {
+      type: "collaborate",
+      preferredRoomID: roomID,
+    });
   };
+
   return (
     <div ref={appRef}>
       <LoopLogo />
       <Grid room={room} shareInfo={shareInfo} />
       <Footer
-        onOpenModal={() => setModalOpen(true)}
-        ctaText={shareInfo ? "Create new" : "Create new"}
-        createCtaURL={shareInfo ? createPlayURL : createShareURL}
+        onShare={
+          shareInfo?.type === "snapshot" ? undefined : () => setModalOpen(true)
+        }
+        ctaText={shareInfo?.type === "snapshot" ? "Create" : "Create new"}
+        createCtaURL={
+          shareInfo?.type === "snapshot" ? createPlayURL : createNewURL
+        }
         reflectUrl="https://reflect.net"
       />
-      <ShareModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
+      <ShareModal
+        isOpen={isModalOpen}
+        createShareURL={createShareURL}
+        onClose={() => setModalOpen(false)}
+      />
       {room && appRect && docRect ? (
         <CursorField r={room.r} appRect={appRect} docRect={docRect} />
       ) : null}

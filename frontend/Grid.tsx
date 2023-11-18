@@ -1,6 +1,7 @@
 import styles from "./Grid.module.css";
 import { useEffect, useRef, useState, PointerEvent } from "react";
 import {
+  Cell,
   coordsToID,
   GRID_SIZE,
   indexToID,
@@ -14,6 +15,8 @@ import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors";
 import { Room } from "./room";
 import { ShareInfo } from "./share";
+
+const EMPTY_CELLS: Record<string, Cell> = {};
 
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
@@ -302,12 +305,13 @@ function Grid({
       const cells = await listCells(tx);
       return Object.fromEntries(cells.map((c) => [c.id, c] as const));
     },
-    {}
+    undefined
   );
 
   const enabledCells =
+    (room?.type === "share" ? room.fixedCells : enabledCellsFromSubscribe) ??
     shareInfo?.cells ??
-    (room?.type === "share" ? room.fixedCells : enabledCellsFromSubscribe);
+    EMPTY_CELLS;
 
   const sources = useRef<Record<string, SourceNode>>({});
 

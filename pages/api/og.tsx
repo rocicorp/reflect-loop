@@ -10,7 +10,7 @@ export const config = {
 
 export default async function handler(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const shareInfo = getShareInfo(searchParams.get("s") || undefined);
+  const shareInfo = getShareInfo(searchParams.get("s") || undefined, undefined);
   return new ImageResponse(OGImage({ enabledCells: shareInfo?.cells || {} }), {
     width: 1200,
     height: 630,

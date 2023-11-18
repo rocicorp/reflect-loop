@@ -1,9 +1,9 @@
 import { generate } from "@rocicorp/rails";
 import type { ReadTransaction, WriteTransaction } from "@rocicorp/reflect";
 import * as v from "@badrap/valita";
-import { getPlayRoomID, getShareRoomID } from "./rooms";
+import { getPublicPlayRoomID, getShareRoomID } from "./rooms";
 
-const MAX_CLIENTS_PER_PLAY_ROOM = 5;
+const MAX_CLIENTS_PER_PLAY_ROOM = 8;
 const MAX_CLIENTS_PER_SHARE_ROOM = 50;
 const CLIENT_ROOM_ASSIGNMENT_GC_THRESHOLD_MS = 60_000;
 const CLIENT_ROOM_ASSIGNMENT_GC_INTERVAL_MS = 10_000;
@@ -84,7 +84,9 @@ async function updateRoomClientCount(
 
 async function alive(
   tx: WriteTransaction,
-  args: { type: "play" } | { type: "share"; encodedCells: string }
+  args:
+    | { type: "play"; preferredRoomID?: string }
+    | { type: "share"; encodedCells: string }
 ) {
   if (tx.location !== "server") {
     return;
@@ -133,15 +135,40 @@ async function alive(
     });
     return;
   }
-  // assign a room
-  for (let roomIndex = 0, roomAssigned = false; !roomAssigned; roomIndex++) {
+  let roomAssigned = false;
+  const tryToAssignRoom = async (roomID: string) => {
+    const room = await getRoom(tx, roomID);
+    const clientCount = room?.clientCount ?? 0;
+    const maxClients =
+      args.type === "share"
+        ? MAX_CLIENTS_PER_SHARE_ROOM
+        : MAX_CLIENTS_PER_PLAY_ROOM;
+    if (clientCount < maxClients) {
+      if (room === undefined) {
+        await putRoom(tx, {
+          id: roomID,
+          clientCount: 1,
+        });
+      } else {
+        await updateRoomClientCount(tx, roomID, 1);
+      }
+      await putClientRoomAssignment(tx, {
+        id: tx.clientID,
+        roomID,
+        aliveTimestamp: now,
+      });
+      roomAssigned = true;
+    }
+  };
+
+  if (args.type === "play" && args.preferredRoomID) {
+    await tryToAssignRoom(args.preferredRoomID);
+  }
+  for (let roomIndex = 0; !roomAssigned; roomIndex++) {
     const roomID =
       args.type === "share"
         ? getShareRoomID(args.encodedCells, roomIndex)
-        : getPlayRoomID(roomIndex);
-    if (roomID === undefined) {
-      return;
-    }
+        : getPublicPlayRoomID(roomIndex);
     const room = await getRoom(tx, roomID);
     const clientCount = room?.clientCount ?? 0;
     const maxClients =
