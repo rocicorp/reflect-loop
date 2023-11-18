@@ -1,0 +1,86 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black */
+  backdrop-filter: blur(8px); /* Blur effect */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalTitle {
+  margin-top: 0;
+  font-weight: 500;
+  font-size: 1.5rem;
+}
+
+.shareOptionTitle {
+  font-weight: 500;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.modalContent {
+  background: rgba(0, 0, 0, 0.85);
+  padding: 1.5rem 3rem 3rem;
+  border-radius: 8px;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+.closeBtn {
+  position: absolute;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  top: 32px;
+  left: 32px;
+  border: none;
+  background: transparent url(/close-button.svg) no-repeat;
+  font-size: 1.5rem;
+  opacity: 0.5;
+}
+
+.closeBtn:hover {
+  opacity: 1;
+}
+
+.closeBtn:focus {
+  outline: none;
+}
+
+.shareOptionsContainer {
+  display: flex;
+  justify-content: space-between;
+  padding: 0;
+}
+
+.shareOption {
+  flex: 1;
+  width: 220px;
+  margin: 0 3rem 0 0;
+}
+
+.shareOption:last-child {
+  margin: 0;
+}
+
+.shareCta {
+  position: relative;
+  color: #fc208a;
+  background-color: transparent;
+  opacity: 1;
+  border-radius: 8px;
+  border: 1px solid #fc208a;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: none;
+  transition: border-color 0.25s;
+  margin-top: 1rem;
+}

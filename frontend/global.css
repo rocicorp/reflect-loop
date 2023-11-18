@@ -1,29 +1,27 @@
 @font-face {
-  font-family: 'Muoto';
+  font-family: "Muoto";
   font-style: normal;
   font-weight: 100 900;
   font-display: block;
-  src: url('assets/fonts/muoto-var.ttf') format('truetype-variations');
+  src: url("/fonts/muoto-var.ttf") format("truetype-variations");
 }
 
 @font-face {
-  font-family: 'Muoto-italic';
+  font-family: "Muoto-italic";
   font-style: italic;
   font-weight: 400;
   font-display: block;
-  src: url('assets/fonts/muoto-italic.woff2') format('woff2');
+  src: url("/fonts/muoto-italic.woff2") format("woff2");
 }
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  font-family: 'Muoto';
+  font-family: "Muoto";
   font-size: 1rem;
   font-variant-ligatures: common-ligatures;
-  -webkit-font-feature-settings:
-    'liga' on,
-    'calt' on;
+  -webkit-font-feature-settings: "liga" on, "calt" on;
   text-rendering: optimizeLegibility;
   color-scheme: light dark;
   color: rgba(255, 255, 255, 1);
@@ -89,12 +87,12 @@ button {
   transition: border-color 0.25s;
 }
 button:hover {
-  border-color: #FC208A;
+  border-color: #fc208a;
   cursor: none;
 }
 button:focus,
 button:focus-visible {
-  outline: 1px auto #FC208A;
+  outline: 1px auto #fc208a;
 }
 
 /* Responsive 📱 */
