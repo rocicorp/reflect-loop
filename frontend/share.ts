@@ -13,6 +13,7 @@ export async function getShareURL(
     | { type: "collaborate"; preferredRoomID: string | undefined }
 ) {
   const url = new URL(window.location.href);
+  url.search = "";
   const cellsEncoded = (await r.query(listCells))
     .map((cell) => `${cell.id}${cell.color}`)
     .join("-");
@@ -20,6 +21,7 @@ export async function getShareURL(
   if (config.type === "collaborate") {
     url.searchParams.set("r", config.preferredRoomID ?? getRandomPlayRoomID());
   }
+  console.log(config, url.toString());
   return url.toString();
 }
 
