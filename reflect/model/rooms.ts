@@ -4,7 +4,7 @@
 import { customAlphabet } from "nanoid";
 
 // breaking schema changes or simply want rooms with less garbage built up.
-const ROOMS_VERSION = "d";
+const ROOMS_VERSION = "e";
 const SEPARATOR = "_";
 const createRandomID = customAlphabet(
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",

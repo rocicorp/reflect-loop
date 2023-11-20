@@ -2,6 +2,9 @@ import { generate } from "@rocicorp/rails";
 import type { ReadTransaction, WriteTransaction } from "@rocicorp/reflect";
 import * as v from "@badrap/valita";
 import { getPublicPlayRoomID, getShareRoomID } from "./rooms";
+import { getUnusedColorID, randomColorID } from "./colors";
+
+type RoomType = "play" | "share";
 
 const MAX_CLIENTS_PER_PLAY_ROOM = 8;
 const MAX_CLIENTS_PER_SHARE_ROOM = 50;
@@ -10,7 +13,7 @@ const CLIENT_ROOM_ASSIGNMENT_GC_INTERVAL_MS = 10_000;
 
 const roomModelSchema = v.object({
   id: v.string(),
-  clientCount: v.number(),
+  clientColors: v.array(v.string()),
 });
 
 export const clientRoomAssignmentSchema = v.object({
@@ -18,6 +21,7 @@ export const clientRoomAssignmentSchema = v.object({
   // foreign key to a roomModelSchema
   roomID: v.string(),
   aliveTimestamp: v.number(),
+  color: v.string(),
 });
 
 const clientRoomAssignmentMetaSchema = v.object({
@@ -25,12 +29,8 @@ const clientRoomAssignmentMetaSchema = v.object({
 });
 
 // Export generated interface.
-export type ClientRoomAssignmentModel = v.Infer<
-  typeof clientRoomAssignmentSchema
->;
-type ClientRoomAssignmentMetaModel = v.Infer<
-  typeof clientRoomAssignmentMetaSchema
->;
+export type ClientRoomAssignment = v.Infer<typeof clientRoomAssignmentSchema>;
+type ClientRoomAssignmentMeta = v.Infer<typeof clientRoomAssignmentMetaSchema>;
 
 const { get: getRoom, put: putRoom } = generate(
   "room",
@@ -53,7 +53,7 @@ export const getClientRoomAssignment = getClientRoomAssignmentInternal;
 const clientRoomAssignmentMetaKey = "clientToRoomMeta";
 async function getClientRoomAssignmentMeta(
   tx: ReadTransaction
-): Promise<ClientRoomAssignmentMetaModel | undefined> {
+): Promise<ClientRoomAssignmentMeta | undefined> {
   const meta = await tx.get(clientRoomAssignmentMetaKey);
   if (meta === undefined) {
     return meta;
@@ -63,23 +63,62 @@ async function getClientRoomAssignmentMeta(
 
 async function putClientRoomAssignmentMeta(
   tx: WriteTransaction,
-  meta: ClientRoomAssignmentMetaModel
+  meta: ClientRoomAssignmentMeta
 ) {
   await tx.set(clientRoomAssignmentMetaKey, meta);
 }
 
-async function updateRoomClientCount(
+async function tryToAddClientToRoom(
   tx: WriteTransaction,
   roomID: string,
-  change: number
+  roomType: RoomType,
+  now: number
+) {
+  const room = (await getRoom(tx, roomID)) ?? {
+    id: roomID,
+    clientColors: [],
+  };
+  const max =
+    roomType === "play"
+      ? MAX_CLIENTS_PER_PLAY_ROOM
+      : MAX_CLIENTS_PER_SHARE_ROOM;
+  if (room.clientColors.length >= max) {
+    return false;
+  }
+  const color = getUnusedColorID(room.clientColors) ?? randomColorID();
+  await putRoom(tx, {
+    id: roomID,
+    clientColors: [...room.clientColors, color],
+  });
+  await putClientRoomAssignment(tx, {
+    id: tx.clientID,
+    roomID,
+    aliveTimestamp: now,
+    color,
+  });
+  return true;
+}
+
+async function removeClientsFromRoom(
+  tx: WriteTransaction,
+  roomID: string,
+  clientColors: string[]
 ) {
   const room = await getRoom(tx, roomID);
-  if (room !== undefined) {
-    await putRoom(tx, {
-      id: room.id,
-      clientCount: Math.max(room.clientCount + change, 0),
-    });
+  if (!room) {
+    return;
   }
+  const updatedClientColors = [...room.clientColors];
+  for (const color of clientColors) {
+    const index = updatedClientColors.indexOf(color);
+    if (index >= 0) {
+      updatedClientColors.splice(index, 1);
+    }
+  }
+  await putRoom(tx, {
+    id: roomID,
+    clientColors: updatedClientColors,
+  });
 }
 
 async function alive(
@@ -103,17 +142,17 @@ async function alive(
     // GC room assignments
     const assignments = await listClientRoomAssignments(tx);
     const toDelete = [];
-    const roomCountChanges = new Map();
+    const roomColorChanges = new Map();
     for (const assignment of assignments) {
       if (
         now - assignment.aliveTimestamp >
         CLIENT_ROOM_ASSIGNMENT_GC_THRESHOLD_MS
       ) {
         toDelete.push(assignment);
-        roomCountChanges.set(
-          assignment.roomID,
-          (roomCountChanges.get(assignment.roomID) ?? 0) - 1
-        );
+        roomColorChanges.set(assignment.roomID, [
+          ...(roomColorChanges.get(assignment.roomID) ?? []),
+          assignment.color,
+        ]);
       }
     }
     await Promise.all(
@@ -122,8 +161,8 @@ async function alive(
       )
     );
     await Promise.all(
-      [...roomCountChanges.entries()].map(async ([roomID, change]) => {
-        await updateRoomClientCount(tx, roomID, change);
+      [...roomColorChanges.entries()].map(async ([roomID, change]) => {
+        await removeClientsFromRoom(tx, roomID, change);
       })
     );
   }
@@ -136,61 +175,20 @@ async function alive(
     return;
   }
   let roomAssigned = false;
-  const tryToAssignRoom = async (roomID: string) => {
-    const room = await getRoom(tx, roomID);
-    const clientCount = room?.clientCount ?? 0;
-    const maxClients =
-      args.type === "share"
-        ? MAX_CLIENTS_PER_SHARE_ROOM
-        : MAX_CLIENTS_PER_PLAY_ROOM;
-    if (clientCount < maxClients) {
-      if (room === undefined) {
-        await putRoom(tx, {
-          id: roomID,
-          clientCount: 1,
-        });
-      } else {
-        await updateRoomClientCount(tx, roomID, 1);
-      }
-      await putClientRoomAssignment(tx, {
-        id: tx.clientID,
-        roomID,
-        aliveTimestamp: now,
-      });
-      roomAssigned = true;
-    }
-  };
-
   if (args.type === "play" && args.preferredRoomID) {
-    await tryToAssignRoom(args.preferredRoomID);
+    roomAssigned = await tryToAddClientToRoom(
+      tx,
+      args.preferredRoomID,
+      args.type,
+      now
+    );
   }
   for (let roomIndex = 0; !roomAssigned; roomIndex++) {
     const roomID =
       args.type === "share"
         ? getShareRoomID(args.encodedCells, roomIndex)
         : getPublicPlayRoomID(roomIndex);
-    const room = await getRoom(tx, roomID);
-    const clientCount = room?.clientCount ?? 0;
-    const maxClients =
-      args.type === "share"
-        ? MAX_CLIENTS_PER_SHARE_ROOM
-        : MAX_CLIENTS_PER_PLAY_ROOM;
-    if (clientCount < maxClients) {
-      if (room === undefined) {
-        await putRoom(tx, {
-          id: roomID,
-          clientCount: 1,
-        });
-      } else {
-        await updateRoomClientCount(tx, roomID, 1);
-      }
-      await putClientRoomAssignment(tx, {
-        id: tx.clientID,
-        roomID,
-        aliveTimestamp: now,
-      });
-      roomAssigned = true;
-    }
+    await tryToAddClientToRoom(tx, roomID, args.type, now);
   }
 }
 
@@ -201,7 +199,7 @@ async function unload(tx: WriteTransaction) {
   const assignment = await getClientRoomAssignment(tx, tx.clientID);
   if (assignment !== undefined) {
     await Promise.all([
-      await updateRoomClientCount(tx, assignment.roomID, -1),
+      await removeClientsFromRoom(tx, assignment.roomID, [assignment.color]),
       await deleteClientRoomAssignment(tx, assignment.id),
     ]);
   }

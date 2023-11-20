@@ -38,6 +38,16 @@ export function colorIDFromID(id: string): string {
   return Math.abs(simpleHash(id) % COLOR_PALATE.length).toString();
 }
 
+export function getUnusedColorID(usedIDs: string[]): string | undefined {
+  for (let i = 0; i < COLOR_PALATE.length; i++) {
+    const colorID = i.toString();
+    if (usedIDs.indexOf(colorID) === -1) {
+      return colorID;
+    }
+  }
+  return undefined;
+}
+
 export function randomColorID(): string {
   return Math.abs(Math.floor(Math.random() * COLOR_PALATE.length)).toString();
 }

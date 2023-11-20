@@ -5,8 +5,10 @@ import { Reflect } from "@rocicorp/reflect/client";
 import CursorField from "./CursorField";
 import { Rect } from "./coordinates";
 import { ShareInfo, ShareType, getShareURL } from "./share";
-import { getClientRoomAssignment } from "../reflect/model/orchestrator";
-import { randomColorID } from "../reflect/model/colors";
+import {
+  ClientRoomAssignment,
+  getClientRoomAssignment,
+} from "../reflect/model/orchestrator";
 import {
   getOrchstratorRoomID,
   getRandomPlayRoomID,
@@ -25,10 +27,10 @@ const playServer =
 const shareServer =
   process.env.NEXT_PUBLIC_SHARE_SERVER ?? "http://127.0.0.1:8080/";
 
-const clientColor = randomColorID();
-
-function useRoomID(shareInfo: ShareInfo | undefined) {
-  const [roomID, setRoomID] = useState<string | undefined>(undefined);
+function useRoomAssignment(shareInfo: ShareInfo | undefined) {
+  const [roomAssignment, setRoomAssignment] = useState<
+    ClientRoomAssignment | undefined
+  >(undefined);
   useEffect(() => {
     const orchestratorR = new Reflect({
       server: orchestratorServer,
@@ -41,9 +43,9 @@ function useRoomID(shareInfo: ShareInfo | undefined) {
 
     orchestratorR.subscribe((tx) => getClientRoomAssignment(tx, tx.clientID), {
       onData: (result) => {
-        setRoomID((prev) => {
-          const newVal = result?.roomID ?? undefined;
-          if (prev !== newVal) {
+        setRoomAssignment((prev) => {
+          const newVal = result;
+          if (prev?.roomID !== newVal?.roomID) {
             console.info("NEW ROOM ID", newVal);
           }
           return newVal;
@@ -91,31 +93,27 @@ function useRoomID(shareInfo: ShareInfo | undefined) {
     // Run once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shareInfo]);
-  return roomID;
+  return roomAssignment;
 }
 
-function useRoom(shareInfo: ShareInfo | undefined, roomID: string | undefined) {
+function useRoom(
+  shareInfo: ShareInfo | undefined,
+  roomAssignment: ClientRoomAssignment | undefined
+) {
   const [room, setRoom] = useState<Room>();
 
   useEffect(() => {
     let room: Room;
 
-    if (roomID === undefined) {
+    if (roomAssignment === undefined) {
+      return;
+    }
+
+    if (shareInfo?.type === "snapshot") {
       room = {
         type: "share",
         r: new Reflect({
-          roomID: "local",
-          userID: "anon",
-          mutators: shareMutators,
-          server: undefined,
-        }),
-        fixedCells: {},
-      };
-    } else if (shareInfo?.type === "snapshot") {
-      room = {
-        type: "share",
-        r: new Reflect({
-          roomID,
+          roomID: roomAssignment.roomID,
           userID: "anon",
           mutators: shareMutators,
           server: shareServer,
@@ -126,7 +124,7 @@ function useRoom(shareInfo: ShareInfo | undefined, roomID: string | undefined) {
       room = {
         type: "play",
         r: new Reflect({
-          roomID,
+          roomID: roomAssignment.roomID,
           userID: "anon",
           mutators: playMutators,
           server: playServer,
@@ -134,7 +132,7 @@ function useRoom(shareInfo: ShareInfo | undefined, roomID: string | undefined) {
       };
     }
 
-    void room.r.mutate.initClient({ color: clientColor });
+    void room.r.mutate.initClient({ color: roomAssignment.color });
     if (room.type === "play") {
       void room.r.mutate.ensureOneCellEnabled();
     }
@@ -158,7 +156,7 @@ function useRoom(shareInfo: ShareInfo | undefined, roomID: string | undefined) {
       setRoom(undefined);
       void room.r.close();
     };
-  }, [shareInfo, roomID]);
+  }, [shareInfo, roomAssignment]);
 
   return room;
 }
@@ -231,8 +229,8 @@ const createNewURL = () => {
 };
 
 const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
-  const roomID = useRoomID(shareInfo);
-  const room = useRoom(shareInfo, roomID);
+  const roomAssignment = useRoomAssignment(shareInfo);
+  const room = useRoom(shareInfo, roomAssignment);
 
   const windowSize = useWindowSize();
   const [appRef, appRect] = useElementSize<HTMLDivElement>([windowSize]);
@@ -255,7 +253,7 @@ const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
     }
     return getShareURL(room.r, {
       type: "collaborate",
-      preferredRoomID: roomID,
+      preferredRoomID: roomAssignment?.roomID,
     });
   };
 
