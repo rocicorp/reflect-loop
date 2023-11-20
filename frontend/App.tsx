@@ -46,7 +46,7 @@ function useRoomAssignment(shareInfo: ShareInfo | undefined) {
         setRoomAssignment((prev) => {
           const newVal = result;
           if (prev?.roomID !== newVal?.roomID) {
-            console.info("NEW ROOM ID", newVal);
+            console.info("New room assignment", newVal);
           }
           return newVal;
         });

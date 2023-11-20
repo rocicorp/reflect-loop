@@ -188,7 +188,7 @@ async function alive(
       args.type === "share"
         ? getShareRoomID(args.encodedCells, roomIndex)
         : getPublicPlayRoomID(roomIndex);
-    await tryToAddClientToRoom(tx, roomID, args.type, now);
+    roomAssigned = await tryToAddClientToRoom(tx, roomID, args.type, now);
   }
 }
 

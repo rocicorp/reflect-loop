@@ -14,6 +14,7 @@ dist-ssr
 
 # Reflect
 .reflect/data
+**/.reflect/data
 
 # Editor directories and files
 .vscode/*
