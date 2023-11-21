@@ -119,7 +119,6 @@ function useRoom(
   useEffect(() => {
     let room: Room;
     let aliveInterval: ReturnType<typeof setInterval> | undefined;
-    let pageHideListener: (() => void) | undefined;
     console.log("creating room!!!!!!!");
 
     if (roomAssignment === undefined) {

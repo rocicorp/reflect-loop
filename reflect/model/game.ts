@@ -132,20 +132,16 @@ export async function updateRecentlyActiveClients(
   await tx.set(RECENT_ACTIVE_CLIENTS_KEY, updated);
 
   if (updatedKeys.length === 0) {
-    console.log("deleting game because no active clients");
+    console.log(
+      "deleting game because no active clients, or new client is only recently active",
+      {
+        txClientID: tx.clientID,
+        updatedKeys,
+        newClientID,
+        recentlyActiveClients,
+      }
+    );
     await tx.del(GAME_KEY);
-    return;
-  }
-
-  if (updatedKeys.length === 1 && newClientID !== undefined) {
-    console.log("starting new game, as new client is only recently active", {
-      txClientID: tx.clientID,
-      updatedKeys,
-      newClientID,
-      recentlyActiveClients,
-    });
-    await tx.del(GAME_KEY);
-    await startGame(tx);
     return;
   }
 

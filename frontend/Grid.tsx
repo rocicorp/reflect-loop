@@ -75,6 +75,8 @@ function Grid({
   shareInfo: ShareInfo | undefined;
 }) {
   const selfColor = useSelfColor(room?.r);
+
+  const [audioInitializing, setAudioInitializing] = useState<boolean>(false);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
@@ -173,11 +175,11 @@ function Grid({
 
   useEffect(() => {
     const audioContext = new AudioContext();
+    audioContext.suspend();
     audioContextRef.current = audioContext;
     const analyser = audioContext.createAnalyser();
     analyserRef.current = analyser;
     analyser.connect(audioContext.destination);
-    setAudioInitialized(audioContext.state === "running");
     const handler = () => {
       setAudioInitialized(audioContext.state === "running");
     };
@@ -201,6 +203,8 @@ function Grid({
       if (!audioContext) {
         return;
       }
+
+      setAudioInitializing(true);
 
       const buffer = audioContext.createBuffer(1, 1, 22050); // 1/10th of a second of silence
       const source = audioContext.createBufferSource();
@@ -462,13 +466,20 @@ function Grid({
       <div className={styles.presenceContainer}>
         <p
           className={classNames(styles.audioStartMessage, {
-            [styles.hidden]: audioInitialized,
+            [styles.hidden]: audioInitialized || audioInitializing,
           })}
         >
           Click or tap anywhere to start audio 🔊
         </p>
+        <p
+          className={classNames(styles.audioStartMessage, {
+            [styles.hidden]: audioInitialized || !audioInitializing,
+          })}
+        >
+          Synchronizing the loops...
+        </p>
         <div
-          className={classNames(styles.presenceBarContainer, {
+          className={classNames({
             [styles.hidden]: !audioInitialized,
           })}
         >
