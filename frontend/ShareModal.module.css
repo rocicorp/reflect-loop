@@ -99,16 +99,16 @@
 
   .shareOptionTitle {
     font-size: 1.25rem;
-    margin-bottom: 0;
+    margin-bottom: 1rem;
   }
 
   .shareOption img {
-    width: 20vw;
+    height: 14vw;
   }
 
   .shareOption p {
-    margin-top: 0;
-    font-size: 1rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
     height: 48px;
     padding: 0 0.5rem;
   }
