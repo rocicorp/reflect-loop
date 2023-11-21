@@ -16,21 +16,21 @@ export default function PresenceBar({
   return (
     <div className={styles.presenceAvatars}>
       {presentClients.map((client) => (
-        <PresenceAvatars client={client} key={client.id} />
+        <PresenceAvatar client={client} key={client.id} />
       ))}
     </div>
   );
 }
 
-function PresenceAvatars({ client }: { client: Client }) {
+export function PresenceAvatar({ client }: { client: Client | undefined }) {
   const { color, location } = client;
 
   return (
-    <span
+    <div
       className={styles.presenceAvatar}
       style={{ borderColor: colorStringForColorID(color) }}
     >
       {flagEmojiForLocation(location)}
-    </span>
+    </div>
   );
 }

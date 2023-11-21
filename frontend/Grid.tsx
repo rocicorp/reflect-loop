@@ -9,12 +9,14 @@ import {
   NUM_CELLS,
 } from "../reflect/model/cell";
 import { useSubscribe } from "replicache-react";
-import { useSelfColor } from "../reflect/subscriptions";
-import PresenceBar from "./PresenceBar";
+import { usePresentClients, useSelfColor } from "../reflect/subscriptions";
+import PresenceBar, { PresenceAvatar } from "./PresenceBar";
 import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors";
 import { Room } from "./room";
 import { ShareInfo } from "./share";
+import { getGame } from "../reflect/model/game";
+import { Client } from "../reflect/model/client";
 
 const EMPTY_CELLS: Record<string, Cell> = {};
 
@@ -75,6 +77,21 @@ function Grid({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext>();
   const analyserRef = useRef<AnalyserNode>();
+  const presentClients = usePresentClients(room?.r);
+
+  const game = useSubscribe(
+    room?.r,
+    (tx) => {
+      return getGame(tx);
+    },
+    undefined
+  );
+
+  useEffect(() => {
+    if (!game && room && room.type === "play") {
+      void room.r.mutate.startGame();
+    }
+  }, [game, room]);
 
   const audioSamples = [
     "/samples/row-1-sample-1.mp3",
@@ -413,6 +430,10 @@ function Grid({
     }
   });
 
+  useEffect(() => {
+    console.log(game, room?.r.clientID);
+  }, [game]);
+
   return (
     <div>
       <div className={styles.presenceContainer}>
@@ -440,41 +461,60 @@ function Grid({
       <div className={styles.grid}>
         {new Array(NUM_CELLS).fill(null).map((_, i) => {
           const id = indexToID(i);
+          const startOfRow = i % GRID_SIZE === 0 ? i / GRID_SIZE : undefined;
+          const clientForRow: Client | undefined =
+            game && startOfRow !== undefined
+              ? presentClients.find(
+                  (c) => c.id === game.rowAssignments[startOfRow]
+                )
+              : undefined;
           return (
-            <div
-              key={id}
-              id={id}
-              className={classNames(styles.cell, {
-                [styles.cellHovered]: id === hoveredID,
-              })}
-              style={
-                enabledCells[id]
-                  ? {
-                      backgroundColor: colorStringForColorID(
-                        enabledCells[id].color
-                      ),
-                    }
-                  : {}
-              }
-              onPointerOver={(e) => {
-                handlePointerOver?.(e, id);
-              }}
-              onPointerOut={(e) => {
-                handlePointerOut?.(e, id);
-              }}
-              onTouchStart={() => handleTouchStart?.(id)}
-              onTouchEnd={() => handleTouchEnd?.()}
-              onClick={() => handleClick?.(id)}
-            >
+            <>
+              {startOfRow !== undefined ? (
+                clientForRow !== undefined ? (
+                  <PresenceAvatar
+                    client={clientForRow}
+                    key={"s" + startOfRow}
+                  />
+                ) : (
+                  <div id={`s${i}`}> key={"s" + startOfRow}</div>
+                )
+              ) : null}
               <div
-                className={styles.cellHighlight}
+                key={id}
+                id={id}
+                className={classNames(styles.cell, {
+                  [styles.cellHovered]: id === hoveredID,
+                })}
                 style={
-                  selfColor
-                    ? { backgroundColor: colorStringForColorID(selfColor) }
+                  enabledCells[id]
+                    ? {
+                        backgroundColor: colorStringForColorID(
+                          enabledCells[id].color
+                        ),
+                      }
                     : {}
                 }
-              />
-            </div>
+                onPointerOver={(e) => {
+                  handlePointerOver?.(e, id);
+                }}
+                onPointerOut={(e) => {
+                  handlePointerOut?.(e, id);
+                }}
+                onTouchStart={() => handleTouchStart?.(id)}
+                onTouchEnd={() => handleTouchEnd?.()}
+                onClick={() => handleClick?.(id)}
+              >
+                <div
+                  className={styles.cellHighlight}
+                  style={
+                    selfColor
+                      ? { backgroundColor: colorStringForColorID(selfColor) }
+                      : {}
+                  }
+                />
+              </div>
+            </>
           );
         })}
       </div>

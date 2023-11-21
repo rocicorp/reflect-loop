@@ -5,10 +5,7 @@ import { Reflect } from "@rocicorp/reflect/client";
 import CursorField from "./CursorField";
 import { Rect } from "./coordinates";
 import { ShareInfo, ShareType, getShareURL } from "./share";
-import {
-  ClientRoomAssignment,
-  getClientRoomAssignment,
-} from "../reflect/model/orchestrator";
+import { getClientRoomAssignment } from "../reflect/model/orchestrator";
 import {
   getOrchstratorRoomID,
   getRandomPlayRoomID,
@@ -121,7 +118,7 @@ function useRoom(
 
   useEffect(() => {
     let room: Room;
-    console.log("createroom");
+    console.log("creating room!!!!!!!");
 
     if (roomAssignment === undefined) {
       return;
