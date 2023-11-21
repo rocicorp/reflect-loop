@@ -27,9 +27,11 @@ const playServer =
 const shareServer =
   process.env.NEXT_PUBLIC_SHARE_SERVER ?? "http://127.0.0.1:8080/";
 
+type RoomAssignment = { roomID: string; color: string };
+
 function useRoomAssignment(shareInfo: ShareInfo | undefined) {
   const [roomAssignment, setRoomAssignment] = useState<
-    ClientRoomAssignment | undefined
+    RoomAssignment | undefined
   >(undefined);
   useEffect(() => {
     const orchestratorR = new Reflect({
@@ -41,17 +43,32 @@ function useRoomAssignment(shareInfo: ShareInfo | undefined) {
       mutators: orchestratorMutators,
     });
 
-    orchestratorR.subscribe((tx) => getClientRoomAssignment(tx, tx.clientID), {
-      onData: (result) => {
-        setRoomAssignment((prev) => {
-          const newVal = result;
-          if (prev?.roomID !== newVal?.roomID) {
-            console.info("New room assignment", newVal);
-          }
-          return newVal;
-        });
+    orchestratorR.subscribe(
+      async (tx) => {
+        const clientRoomAssignment = await getClientRoomAssignment(
+          tx,
+          tx.clientID
+        );
+        if (!clientRoomAssignment) {
+          return undefined;
+        }
+        return {
+          roomID: clientRoomAssignment.roomID,
+          color: clientRoomAssignment.color,
+        };
       },
-    });
+      {
+        onData: (result) => {
+          setRoomAssignment((prev) => {
+            const newVal = result;
+            if (prev?.roomID !== newVal?.roomID) {
+              console.info("New room assignment", newVal);
+            }
+            return newVal;
+          });
+        },
+      }
+    );
     const aliveIfVisible = () => {
       if (document.visibilityState === "visible") {
         void orchestratorR.mutate.alive(
@@ -98,12 +115,13 @@ function useRoomAssignment(shareInfo: ShareInfo | undefined) {
 
 function useRoom(
   shareInfo: ShareInfo | undefined,
-  roomAssignment: ClientRoomAssignment | undefined
+  roomAssignment: RoomAssignment | undefined
 ) {
   const [room, setRoom] = useState<Room>();
 
   useEffect(() => {
     let room: Room;
+    console.log("createroom");
 
     if (roomAssignment === undefined) {
       return;
