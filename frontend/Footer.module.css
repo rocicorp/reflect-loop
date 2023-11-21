@@ -68,30 +68,34 @@
 /* For mobile devices with width up to 600px */
 @media (max-width: 600px) {
   .footer {
-    margin-top: 1rem;
+    margin-top: 0.5rem;
   }
   .createdWithReflect {
     width: 21vw;
   }
   .primaryCta {
+    font-size: 12px;
     padding: 0.6rem 0.8rem;
   }
   .footerShare {
+    font-size: 12px;
     padding: 0.6rem 0.8rem;
   }
 }
 
 @media screen and (max-height: 830px) {
   .footer {
-    margin-top: 1rem;
+    margin-top: 0.5rem;
   }
   .createdWithReflect {
     width: 12vh;
   }
   .primaryCta {
+    font-size: 12px;
     padding: 0.6rem 0.8rem;
   }
   .footerShare {
+    font-size: 12px;
     padding: 0.6rem 0.8rem;
   }
 }
