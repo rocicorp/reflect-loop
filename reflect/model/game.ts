@@ -135,7 +135,8 @@ async function updateRecentlyActiveClients(tx: WriteTransaction) {
   const updatedRowAssignments = [...game.rowAssignments];
   // Exactly one delete and one add, replace deleted with new to minimize
   // disruption
-  if (deleted.size === 0 && newClientID !== undefined) {
+  if (deleted.size === 1 && newClientID !== undefined) {
+    console.log("basic");
     for (let i = currentRow + 1; i < updatedRowAssignments.length; i++) {
       if (deleted.has(updatedRowAssignments[i])) {
         updatedRowAssignments[i] = newClientID;

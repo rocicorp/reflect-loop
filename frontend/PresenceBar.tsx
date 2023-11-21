@@ -22,7 +22,7 @@ export default function PresenceBar({
   );
 }
 
-export function PresenceAvatar({ client }: { client: Client | undefined }) {
+export function PresenceAvatar({ client }: { client: Client }) {
   const { color, location } = client;
 
   return (

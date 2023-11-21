@@ -4,6 +4,7 @@ import {
   Cell,
   coordsToID,
   GRID_SIZE,
+  idToCoords,
   indexToID,
   listCells,
   NUM_CELLS,
@@ -15,7 +16,11 @@ import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors";
 import { Room } from "./room";
 import { ShareInfo } from "./share";
-import { getGame } from "../reflect/model/game";
+import {
+  getCurrentRow,
+  getGame,
+  getNextLoopStartTime,
+} from "../reflect/model/game";
 import { Client } from "../reflect/model/client";
 
 const EMPTY_CELLS: Record<string, Cell> = {};
@@ -78,6 +83,7 @@ function Grid({
   const audioContextRef = useRef<AudioContext>();
   const analyserRef = useRef<AnalyserNode>();
   const presentClients = usePresentClients(room?.r);
+  const [now, setNow] = useState(Date.now());
 
   const game = useSubscribe(
     room?.r,
@@ -88,10 +94,10 @@ function Grid({
   );
 
   useEffect(() => {
-    if (!game && room && room.type === "play") {
+    if (audioInitialized && room && room.type === "play") {
       void room.r.mutate.startGame();
     }
-  }, [game, room]);
+  }, [room, audioInitialized]);
 
   const audioSamples = [
     "/samples/row-1-sample-1.mp3",
@@ -213,6 +219,11 @@ function Grid({
       }
       try {
         await audioContext.resume();
+        await audioContext.suspend();
+        const nextLoopStart = getNextLoopStartTime(Date.now());
+        setTimeout(async () => {
+          await audioContext.resume();
+        }, nextLoopStart - Date.now());
         removeEventListeners();
       } catch (e) {
         console.error("Failed to start audio context", e);
@@ -287,6 +298,7 @@ function Grid({
       canvasCtx.fillRect(0, 0, progressBarWidth, height);
     }
 
+    setNow(Date.now());
     requestAnimationFrame(drawWaveform);
   };
 
@@ -423,16 +435,24 @@ function Grid({
     }
   );
 
-  const handleClick = handleIfPlayRoom((id: string) => {
-    setHoveredID(null);
-    if (room?.type === "play") {
-      room.r.mutate.setCellEnabled({ id, enabled: !(id in enabledCells) });
-    }
-  });
-
   useEffect(() => {
     console.log(game, room?.r.clientID);
   }, [game]);
+
+  const currentRow = game ? getCurrentRow(game.startTime, now) : undefined;
+
+  const handleClick = handleIfPlayRoom((id: string) => {
+    if (room?.type === "play") {
+      if (
+        currentRow !== undefined &&
+        idToCoords(id)[1] === currentRow &&
+        game?.rowAssignments[currentRow] === room.r.clientID
+      ) {
+        setHoveredID(null);
+        room.r.mutate.setCellEnabled({ id, enabled: !(id in enabledCells) });
+      }
+    }
+  });
 
   return (
     <div>
@@ -471,14 +491,18 @@ function Grid({
           return (
             <>
               {startOfRow !== undefined ? (
-                clientForRow !== undefined ? (
-                  <PresenceAvatar
-                    client={clientForRow}
-                    key={"s" + startOfRow}
-                  />
-                ) : (
-                  <div id={`s${i}`}> key={"s" + startOfRow}</div>
-                )
+                <div
+                  id={`s${startOfRow}`}
+                  key={`s${startOfRow}`}
+                  style={{ opacity: startOfRow === currentRow ? 1.0 : 0.3 }}
+                >
+                  {clientForRow !== undefined ? (
+                    <PresenceAvatar
+                      client={clientForRow}
+                      key={"s" + startOfRow}
+                    />
+                  ) : null}
+                </div>
               ) : null}
               <div
                 key={id}
