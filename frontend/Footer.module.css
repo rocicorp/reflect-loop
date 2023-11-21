@@ -34,7 +34,7 @@
 .primaryCta {
   position: relative;
   padding: 0.6rem 1rem;
-  border-radius: 4px;
+  border-radius: 8px;
   background-color: #fc208a;
   opacity: 1;
 }
@@ -62,4 +62,40 @@
 
 .footerShare {
   margin-right: 0.5rem;
+}
+
+
+/* For mobile devices with width up to 600px */
+@media (max-width: 600px) {
+  .footer {
+    margin-top: 0.5rem;
+  }
+  .createdWithReflect {
+    width: 21vw;
+  }
+  .primaryCta {
+    font-size: 12px;
+    padding: 0.6rem 0.8rem;
+  }
+  .footerShare {
+    font-size: 12px;
+    padding: 0.6rem 0.8rem;
+  }
+}
+
+@media screen and (max-height: 830px) {
+  .footer {
+    margin-top: 0.5rem;
+  }
+  .createdWithReflect {
+    width: 12vh;
+  }
+  .primaryCta {
+    font-size: 12px;
+    padding: 0.6rem 0.8rem;
+  }
+  .footerShare {
+    font-size: 12px;
+    padding: 0.6rem 0.8rem;
+  }
 }

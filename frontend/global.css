@@ -103,3 +103,9 @@ button:focus-visible {
     place-items: flex-start;
   }
 }
+
+@media screen and (max-height: 830px) {
+  #__next {
+    width: 50vh;
+  }
+}
