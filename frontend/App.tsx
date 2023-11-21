@@ -148,9 +148,9 @@ function useRoom(
     }
 
     void room.r.mutate.initClient({ color: roomAssignment.color });
-    if (room.type === "play") {
-      void room.r.mutate.ensureOneCellEnabled();
-    }
+    // if (room.type === "play") {
+    //   void room.r.mutate.ensureOneCellEnabled();
+    // }
     const clientLocation = fetch("https://reflect.net/api/get-location")
       .then((resp) => resp.json())
       .then((data) => {
