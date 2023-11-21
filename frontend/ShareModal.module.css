@@ -84,3 +84,41 @@
   transition: border-color 0.25s;
   margin-top: 1rem;
 }
+
+/* For mobile devices with width up to 600px */
+@media (max-width: 600px) {
+  .modalContent {
+    padding: 1.5rem 1.5rem 3rem;
+    width: 80vw;
+  }
+
+  .shareOption {
+    width: 100%;
+    margin: 0;
+  }
+
+  .shareOptionTitle {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+  }
+
+  .shareOption img {
+    width: 20vw;
+  }
+
+  .shareOption p {
+    margin-top: 0;
+    font-size: 1rem;
+    height: 48px;
+    padding: 0 0.5rem;
+  }
+
+  .modalTitle {
+    font-size: 1.25rem;
+  }
+
+  .closeBtn {
+    top: 24px;
+    left: 24px;
+  }
+}

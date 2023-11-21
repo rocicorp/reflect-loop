@@ -35,3 +35,10 @@
     fill: #edc804;
   }
 }
+
+@media screen and (max-height: 830px) {
+  .loopLogo {
+    margin-bottom: 1rem;
+    width: 18vh;
+  }
+}
