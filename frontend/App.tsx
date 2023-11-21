@@ -118,6 +118,7 @@ function useRoom(
 
   useEffect(() => {
     let room: Room;
+    let aliveInterval: ReturnType<typeof setInterval> | undefined;
     console.log("creating room!!!!!!!");
 
     if (roomAssignment === undefined) {
@@ -136,7 +137,7 @@ function useRoom(
         fixedCells: shareInfo.cells,
       };
     } else {
-      room = {
+      const playRoom: Room = {
         type: "play",
         r: new Reflect({
           roomID: roomAssignment.roomID,
@@ -145,6 +146,15 @@ function useRoom(
           server: playServer,
         }),
       };
+      room = playRoom;
+      const aliveIfVisible = () => {
+        if (document.visibilityState === "visible") {
+          // just to trigger update
+          void playRoom.r.mutate.startGame();
+        }
+      };
+      const ROOM_ALIVE_INTERVAL_MS = 1_000;
+      aliveInterval = setInterval(aliveIfVisible, ROOM_ALIVE_INTERVAL_MS);
     }
 
     void room.r.mutate.initClient({ color: roomAssignment.color });
@@ -168,6 +178,7 @@ function useRoom(
 
     setRoom(room);
     return () => {
+      clearInterval(aliveInterval);
       setRoom(undefined);
       void room.r.close();
     };

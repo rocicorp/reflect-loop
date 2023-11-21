@@ -10,7 +10,7 @@ import { GRID_SIZE } from "./cell";
 
 const LOOP_LENGTH_MS = 8 * 1000;
 const GAME_LENGTH_MS = LOOP_LENGTH_MS * 8;
-const GAME_START_DELAY_MS = 5 * 1000;
+const GAME_START_DELAY_MS = 1000;
 
 export function getNextLoopStartTime(now: number) {
   if (now % LOOP_LENGTH_MS === 0) {
@@ -51,6 +51,7 @@ export async function startGame(tx: WriteTransaction) {
   }
   const now = Date.now();
   const existingGame = await getGame(tx);
+  console.log("startGame");
 
   if (!existingGame || now - existingGame.startTime > GAME_LENGTH_MS) {
     console.log("creating new game");
@@ -85,7 +86,7 @@ const recentlyActiveClientsSchema = v.record(
 type RecentlyActiveClients = v.Infer<typeof recentlyActiveClientsSchema>;
 
 const RECENT_ACTIVE_CLIENTS_KEY = "recentActiveClients";
-const RECENT_ACTIVE_THRESHOLD_MS = 10_000;
+const RECENT_ACTIVE_THRESHOLD_MS = 3_000;
 
 async function getRecentlyActiveClients(tx: ReadTransaction) {
   return (await tx.get<RecentlyActiveClients>(RECENT_ACTIVE_CLIENTS_KEY)) ?? {};
@@ -117,8 +118,22 @@ async function updateRecentlyActiveClients(tx: WriteTransaction) {
     }
   }
 
-  console.log("updateRecentlyActiveClients setting", updated);
+  const updatedKeys = [...Object.keys(updated)];
   await tx.set(RECENT_ACTIVE_CLIENTS_KEY, updated);
+
+  if (updatedKeys.length === 1 && newClientID !== undefined) {
+    console.log("starting new game, as new client is only recently active", {
+      txClientID: tx.clientID,
+      updatedKeys,
+      newClientID,
+      recentlyActiveClients,
+    });
+    tx.del(GAME_KEY);
+    await startGame(tx);
+    return;
+  }
+
+  console.log("updateRecentlyActiveClients setting", updated);
   if (newClientID === undefined && deleted.size === 0) {
     return;
   }
