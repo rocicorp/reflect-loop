@@ -32,6 +32,7 @@
 }
 
 .primaryCta {
+  color: rgba(255,255,255,1);
   position: relative;
   padding: 0.6rem 1rem;
   border-radius: 8px;
@@ -61,6 +62,7 @@
 }
 
 .footerShare {
+  color: rgba(255, 255, 255, 1);
   margin-right: 0.5rem;
 }
 
