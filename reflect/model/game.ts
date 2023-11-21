@@ -92,7 +92,10 @@ async function getRecentlyActiveClients(tx: ReadTransaction) {
   return (await tx.get<RecentlyActiveClients>(RECENT_ACTIVE_CLIENTS_KEY)) ?? {};
 }
 
-async function updateRecentlyActiveClients(tx: WriteTransaction) {
+export async function updateRecentlyActiveClients(
+  tx: WriteTransaction,
+  { disconnect } = { disconnect: false }
+) {
   if (tx.location !== "server") {
     return;
   }
@@ -103,16 +106,23 @@ async function updateRecentlyActiveClients(tx: WriteTransaction) {
     "updateRecentlyActiveClients",
     recentlyActiveClients,
     now,
-    tx.clientID
+    tx.clientID,
+    disconnect
   );
   const updated: RecentlyActiveClients = { ...recentlyActiveClients };
-  const newClientID = !Object.hasOwn(recentlyActiveClients, tx.clientID)
-    ? tx.clientID
-    : undefined;
-  updated[tx.clientID] = { lastActivityTimestamp: now };
+  let newClientID = undefined;
+  if (!disconnect) {
+    newClientID = !Object.hasOwn(recentlyActiveClients, tx.clientID)
+      ? tx.clientID
+      : undefined;
+    updated[tx.clientID] = { lastActivityTimestamp: now };
+  }
   const deleted = new Set();
   for (const [clientID, { lastActivityTimestamp }] of Object.entries(updated)) {
-    if (now - lastActivityTimestamp > RECENT_ACTIVE_THRESHOLD_MS) {
+    if (
+      (disconnect && clientID == tx.clientID) ||
+      now - lastActivityTimestamp > RECENT_ACTIVE_THRESHOLD_MS
+    ) {
       delete updated[clientID];
       deleted.add(clientID);
     }
@@ -121,6 +131,12 @@ async function updateRecentlyActiveClients(tx: WriteTransaction) {
   const updatedKeys = [...Object.keys(updated)];
   await tx.set(RECENT_ACTIVE_CLIENTS_KEY, updated);
 
+  if (updatedKeys.length === 0) {
+    console.log("deleting game because no active clients");
+    await tx.del(GAME_KEY);
+    return;
+  }
+
   if (updatedKeys.length === 1 && newClientID !== undefined) {
     console.log("starting new game, as new client is only recently active", {
       txClientID: tx.clientID,
@@ -128,7 +144,7 @@ async function updateRecentlyActiveClients(tx: WriteTransaction) {
       newClientID,
       recentlyActiveClients,
     });
-    tx.del(GAME_KEY);
+    await tx.del(GAME_KEY);
     await startGame(tx);
     return;
   }
@@ -197,6 +213,10 @@ async function updateRecentlyActiveClients(tx: WriteTransaction) {
   });
 }
 
+export function alive() {}
+
+export function unload() {}
+
 export function decorateWithUpdateRecentlyActiveClients<MD extends MutatorDefs>(
   mutators: MD
 ): MD {
@@ -215,4 +235,6 @@ export function decorateWithUpdateRecentlyActiveClients<MD extends MutatorDefs>(
 
 export const mutators = {
   startGame,
+  alive,
+  unload,
 };

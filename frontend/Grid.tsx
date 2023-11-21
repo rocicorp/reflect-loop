@@ -94,10 +94,15 @@ function Grid({
   );
 
   useEffect(() => {
-    if (audioInitialized && room && room.type === "play") {
+    if (
+      audioInitialized &&
+      room &&
+      room.type === "play" &&
+      (!game || getCurrentRow(game.startTime, now) === undefined)
+    ) {
       void room.r.mutate.startGame();
     }
-  }, [room, audioInitialized]);
+  }, [room, audioInitialized, game, now]);
 
   const audioSamples = [
     "/samples/row-1-sample-1.mp3",
@@ -181,8 +186,6 @@ function Grid({
       audioContext.removeEventListener("statechange", handler);
     };
   }, []);
-
-  useEffect(() => {}, []);
 
   // This enables audio on click.
   useEffect(() => {

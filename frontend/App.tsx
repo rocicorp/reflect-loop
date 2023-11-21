@@ -119,6 +119,7 @@ function useRoom(
   useEffect(() => {
     let room: Room;
     let aliveInterval: ReturnType<typeof setInterval> | undefined;
+    let pageHideListener: (() => void) | undefined;
     console.log("creating room!!!!!!!");
 
     if (roomAssignment === undefined) {
@@ -149,8 +150,7 @@ function useRoom(
       room = playRoom;
       const aliveIfVisible = () => {
         if (document.visibilityState === "visible") {
-          // just to trigger update
-          void playRoom.r.mutate.startGame();
+          void playRoom.r.mutate.alive();
         }
       };
       const ROOM_ALIVE_INTERVAL_MS = 1_000;
