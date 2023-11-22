@@ -39,26 +39,15 @@ async function ensureOneCellEnabled(tx: WriteTransaction) {
   if (cells.length === 0) {
     const randCoord = () => Math.floor(Math.random() * GRID_SIZE);
     const randomID = coordsToID(randCoord(), randCoord());
-    await setCellEnabled(tx, { id: randomID, enabled: true, exclusive: false });
+    await setCellEnabled(tx, { id: randomID, enabled: true });
   }
 }
 
 async function setCellEnabled(
   tx: WriteTransaction,
-  {
-    id,
-    enabled,
-    exclusive = false,
-  }: { id: string; enabled: boolean; exclusive: boolean }
+  { id, enabled }: { id: string; enabled: boolean }
 ) {
   if (enabled) {
-    if (exclusive) {
-      const [, y] = idToCoords(id);
-      for (let i = 0; i < GRID_SIZE; i++) {
-        const id = coordsToID(i, y);
-        await cellGenerated.delete(tx, id);
-      }
-    }
     const client = await getClient(tx, tx.clientID);
     await cellGenerated.put(tx, {
       id,
