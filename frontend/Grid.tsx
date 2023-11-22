@@ -409,7 +409,15 @@ function Grid({
   const handleClick = handleIfPlayRoom((id: string) => {
     setHoveredID(null);
     if (room?.type === "play") {
-      room.r.mutate.setCellEnabled({ id, enabled: !(id in enabledCells) });
+      const exclusiveParam = new URL(location.href).searchParams.get(
+        "exclusive"
+      );
+      const exclusive = exclusiveParam === "true";
+      room.r.mutate.setCellEnabled({
+        id,
+        enabled: !(id in enabledCells),
+        exclusive,
+      });
     }
   });
 
