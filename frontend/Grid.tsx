@@ -76,11 +76,10 @@ function Grid({
 }) {
   const selfColor = useSelfColor(room?.r);
 
-  const [audioInitializing, setAudioInitializing] = useState<boolean>(false);
+  const [audioStartTime, setAudioStartTime] = useState<number>(-1);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
-  const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext>();
   const analyserRef = useRef<AnalyserNode>();
@@ -97,11 +96,12 @@ function Grid({
 
   useEffect(() => {
     if (
-      audioInitialized &&
+      audioStartTime !== -1 &&
       room &&
       room.type === "play" &&
       (!game || getCurrentRow(game.startTime, now) === undefined)
     ) {
+      console.log(audioInitialized);
       void room.r.mutate.startGame();
     }
   }, [room, audioInitialized, game, now]);
@@ -204,8 +204,6 @@ function Grid({
         return;
       }
 
-      setAudioInitializing(true);
-
       const buffer = audioContext.createBuffer(1, 1, 22050); // 1/10th of a second of silence
       const source = audioContext.createBufferSource();
       source.buffer = buffer;
@@ -228,6 +226,7 @@ function Grid({
         await audioContext.resume();
         await audioContext.suspend();
         const nextLoopStart = getNextLoopStartTime(Date.now());
+        setAudioStartTime(nextLoopStart);
         setTimeout(async () => {
           await audioContext.resume();
         }, nextLoopStart - Date.now());
@@ -304,15 +303,24 @@ function Grid({
       canvasCtx.fillStyle = "rgba(255, 255, 255, 0.1)";
       canvasCtx.fillRect(0, 0, progressBarWidth, height);
     }
-
-    setNow(Date.now());
-    requestAnimationFrame(drawWaveform);
   };
 
   useEffect(() => {
-    drawWaveform();
+    let done = false;
+    const onFrame = () => {
+      setNow(Date.now());
+      drawWaveform();
+      if (done) {
+        return;
+      }
+      requestAnimationFrame(onFrame);
+    };
+    requestAnimationFrame(onFrame);
+    return () => {
+      done = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef.current, redrawTrigger]);
+  }, []);
 
   const loadAudioSamples = async (audioContext: AudioContext) => {
     const buffers = await Promise.all(
@@ -323,8 +331,6 @@ function Grid({
       })
     );
     setAudioBuffers(buffers);
-
-    setRedrawTrigger((prev) => prev + 1);
   };
 
   useEffect(() => {
@@ -442,10 +448,6 @@ function Grid({
     }
   );
 
-  useEffect(() => {
-    console.log(game, room?.r.clientID);
-  }, [game]);
-
   const currentRow = game ? getCurrentRow(game.startTime, now) : undefined;
 
   const handleClick = handleIfPlayRoom((id: string) => {
@@ -456,7 +458,15 @@ function Grid({
         game?.rowAssignments[currentRow] === room.r.clientID
       ) {
         setHoveredID(null);
-        room.r.mutate.setCellEnabled({ id, enabled: !(id in enabledCells) });
+        const exclusiveParam = new URL(location.href).searchParams.get(
+          "exclusive"
+        );
+        const exclusive = exclusiveParam === "false" ? false : true;
+        room.r.mutate.setCellEnabled({
+          id,
+          enabled: !(id in enabledCells),
+          exclusive,
+        });
       }
     }
   });
@@ -466,17 +476,19 @@ function Grid({
       <div className={styles.presenceContainer}>
         <p
           className={classNames(styles.audioStartMessage, {
-            [styles.hidden]: audioInitialized || audioInitializing,
+            [styles.hidden]: audioInitialized || audioStartTime !== -1,
           })}
         >
           Click or tap anywhere to start audio 🔊
         </p>
         <p
           className={classNames(styles.audioStartMessage, {
-            [styles.hidden]: audioInitialized || !audioInitializing,
+            [styles.hidden]: audioInitialized || audioStartTime === -1,
           })}
         >
-          Synchronizing the loops...
+          {audioStartTime === -1
+            ? ""
+            : `Starting in ${Math.ceil((audioStartTime - now) / 1000)}...`}
         </p>
         <div
           className={classNames({

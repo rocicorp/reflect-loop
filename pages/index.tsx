@@ -40,7 +40,7 @@ export default function Home({
         <meta
           property="og:image"
           content={
-            shareInfo
+            shareInfo?.encodedCells
               ? `https://loop.reflect.net/api/og?s=${shareInfo.encodedCells}`
               : `https://loop.reflect.net/api/og?s=076-118-126-208-218-226-253-288-298-333-483-503-523-586-613`
           }

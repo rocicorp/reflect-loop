@@ -45,9 +45,20 @@ async function ensureOneCellEnabled(tx: WriteTransaction) {
 
 async function setCellEnabled(
   tx: WriteTransaction,
-  { id, enabled }: { id: string; enabled: boolean }
+  {
+    id,
+    enabled,
+    exclusive = false,
+  }: { id: string; enabled: boolean; exclusive?: boolean | undefined }
 ) {
   if (enabled) {
+    if (exclusive) {
+      const [, y] = idToCoords(id);
+      for (let i = 0; i < GRID_SIZE; i++) {
+        const id = coordsToID(i, y);
+        await cellGenerated.delete(tx, id);
+      }
+    }
     const client = await getClient(tx, tx.clientID);
     await cellGenerated.put(tx, {
       id,

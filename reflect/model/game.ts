@@ -6,11 +6,16 @@ import {
   WriteTransaction,
 } from "@rocicorp/reflect";
 import { nanoid } from "nanoid";
-import { GRID_SIZE } from "./cell";
+import {
+  GRID_SIZE,
+  NUM_CELLS,
+  indexToID,
+  mutators as cellMutators,
+} from "./cell";
 
 const LOOP_LENGTH_MS = 8 * 1000;
 const GAME_LENGTH_MS = LOOP_LENGTH_MS * 8;
-const GAME_START_DELAY_MS = 1000;
+const GAME_START_DELAY_MS = 500;
 
 export function getNextLoopStartTime(now: number) {
   if (now % LOOP_LENGTH_MS === 0) {
@@ -69,6 +74,11 @@ export async function startGame(tx: WriteTransaction) {
       startTime: getNextLoopStartTime(now + GAME_START_DELAY_MS),
       rowAssignments,
     });
+    for (let i = 0; i < NUM_CELLS; i++) {
+      const id = indexToID(i);
+      console.log("disabling id", id);
+      await cellMutators.setCellEnabled(tx, { id, enabled: false });
+    }
     await setGame(tx, {
       id: nanoid(),
       startTime: getNextLoopStartTime(now + GAME_START_DELAY_MS),
@@ -102,13 +112,13 @@ export async function updateRecentlyActiveClients(
   const recentlyActiveClients =
     (await tx.get<RecentlyActiveClients>(RECENT_ACTIVE_CLIENTS_KEY)) ?? {};
   const now = Date.now();
-  console.log(
-    "updateRecentlyActiveClients",
-    recentlyActiveClients,
-    now,
-    tx.clientID,
-    disconnect
-  );
+  //   console.log(
+  //     "updateRecentlyActiveClients",
+  //     recentlyActiveClients,
+  //     now,
+  //     tx.clientID,
+  //     disconnect
+  //   );
   const updated: RecentlyActiveClients = { ...recentlyActiveClients };
   let newClientID = undefined;
   if (!disconnect) {
@@ -132,24 +142,24 @@ export async function updateRecentlyActiveClients(
   await tx.set(RECENT_ACTIVE_CLIENTS_KEY, updated);
 
   if (updatedKeys.length === 0) {
-    console.log(
-      "deleting game because no active clients, or new client is only recently active",
-      {
-        txClientID: tx.clientID,
-        updatedKeys,
-        newClientID,
-        recentlyActiveClients,
-      }
-    );
+    // console.log(
+    //   "deleting game because no active clients, or new client is only recently active",
+    //   {
+    //     txClientID: tx.clientID,
+    //     updatedKeys,
+    //     newClientID,
+    //     recentlyActiveClients,
+    //   }
+    // );
     await tx.del(GAME_KEY);
     return;
   }
 
-  console.log("updateRecentlyActiveClients setting", updated);
+  //   console.log("updateRecentlyActiveClients setting", updated);
   if (newClientID === undefined && deleted.size === 0) {
     return;
   }
-  console.log("updating game", newClientID, [...deleted]);
+  //   console.log("updating game", newClientID, [...deleted]);
   const game = await getGame(tx);
   if (game === undefined) {
     return;
@@ -158,12 +168,11 @@ export async function updateRecentlyActiveClients(
   if (currentRow === undefined || currentRow === GRID_SIZE - 1) {
     return;
   }
-  console.log("updating row assignments");
+  //   console.log("updating row assignments");
   const updatedRowAssignments = [...game.rowAssignments];
   // Exactly one delete and one add, replace deleted with new to minimize
   // disruption
   if (deleted.size === 1 && newClientID !== undefined) {
-    console.log("basic");
     for (let i = currentRow + 1; i < updatedRowAssignments.length; i++) {
       if (deleted.has(updatedRowAssignments[i])) {
         updatedRowAssignments[i] = newClientID;
@@ -196,12 +205,12 @@ export async function updateRecentlyActiveClients(
     ) {
       updatedRowAssignments[i] = order[j % order.length];
     }
-    console.log(
-      "updatedRowAssignments",
-      game.rowAssignments,
-      order,
-      updatedRowAssignments
-    );
+    // console.log(
+    //   "updatedRowAssignments",
+    //   game.rowAssignments,
+    //   order,
+    //   updatedRowAssignments
+    // );
   }
   await setGame(tx, {
     ...game,
