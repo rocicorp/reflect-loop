@@ -76,6 +76,7 @@ function Grid({
   shareInfo: ShareInfo | undefined;
 }) {
   const selfColor = useSelfColor(room?.r);
+  const isSnapshot = shareInfo?.type === "snapshot";
 
   const [audioStartTime, setAudioStartTime] = useState<number>(-1);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
@@ -226,12 +227,14 @@ function Grid({
       }
       try {
         await audioContext.resume();
-        await audioContext.suspend();
-        const nextLoopStart = getNextLoopStartTime(Date.now());
-        setAudioStartTime(nextLoopStart);
-        setTimeout(async () => {
-          await audioContext.resume();
-        }, nextLoopStart - Date.now());
+        if (!isSnapshot) {
+          await audioContext.suspend();
+          const nextLoopStart = getNextLoopStartTime(Date.now());
+          setAudioStartTime(nextLoopStart);
+          setTimeout(async () => {
+            await audioContext.resume();
+          }, nextLoopStart - Date.now());
+        }
         removeEventListeners();
       } catch (e) {
         console.error("Failed to start audio context", e);
@@ -246,6 +249,7 @@ function Grid({
     };
     window.document.documentElement.addEventListener("click", handler, false);
     return removeEventListeners;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [audioInitialized]);
 
   const drawWaveform = () => {
@@ -509,7 +513,11 @@ function Grid({
         width="444"
         height="64"
       ></canvas>
-      <div className={styles.grid}>
+      <div
+        className={classNames(styles.grid, {
+          [styles.gridSnapshot]: isSnapshot,
+        })}
+      >
         {new Array(NUM_CELLS).fill(null).map((_, i) => {
           const id = indexToID(i);
           const startOfRow = i % GRID_SIZE === 0 ? i / GRID_SIZE : undefined;
@@ -521,7 +529,7 @@ function Grid({
               : undefined;
           return (
             <>
-              {startOfRow !== undefined ? (
+              {!isSnapshot && startOfRow !== undefined ? (
                 <div
                   id={`s${startOfRow}`}
                   key={`s${startOfRow}`}
