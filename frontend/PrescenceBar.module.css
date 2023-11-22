@@ -1,18 +1,28 @@
 .presenceAvatars {
-  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
   transition: opacity 0.5s;
+}
+
+.presenceAvatarContainer {
+  height: 2.4rem;
+  width: 2.4rem;
+  display: flex;
 }
 
 .presenceAvatar {
   text-align: center;
   text-align: -webkit-center;
-  line-height: 2rem;
   border: 3px solid #fc49ab;
   border-radius: 50%;
-  height: 2rem;
-  width: 2rem;
-  display: inline-block;
-  margin-right: 0.5rem;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
 }
 
 .presenceAvatar:last-child {

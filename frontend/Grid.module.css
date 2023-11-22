@@ -25,6 +25,8 @@
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10 and IE 11 */
   user-select: none; /* Standard syntax */
+  min-height: 0;
+  min-width: 0;
 }
 
 .cell {
@@ -63,6 +65,16 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   width: 444px;
+}
+
+.presenceAvatarContainer {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
 }
 
 /* Responsive 📱 */

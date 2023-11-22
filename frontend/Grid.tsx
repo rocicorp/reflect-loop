@@ -526,6 +526,7 @@ function Grid({
                   id={`s${startOfRow}`}
                   key={`s${startOfRow}`}
                   style={{ opacity: startOfRow === currentRow ? 1.0 : 0.3 }}
+                  className={styles.presenceAvatarContainer}
                 >
                   {clientForRow !== undefined ? (
                     <PresenceAvatar

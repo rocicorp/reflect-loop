@@ -16,7 +16,9 @@ export default function PresenceBar({
   return (
     <div className={styles.presenceAvatars}>
       {presentClients.map((client) => (
-        <PresenceAvatar client={client} key={client.id} />
+        <div className={styles.presenceAvatarContainer}>
+          <PresenceAvatar client={client} key={client.id} />
+        </div>
       ))}
     </div>
   );
