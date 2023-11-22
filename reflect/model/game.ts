@@ -13,7 +13,7 @@ import {
   mutators as cellMutators,
 } from "./cell";
 
-const LOOP_LENGTH_MS = 8 * 1000;
+export const LOOP_LENGTH_MS = 8 * 1000;
 const GAME_LENGTH_MS = LOOP_LENGTH_MS * 8;
 const GAME_START_DELAY_MS = 500;
 

@@ -17,6 +17,7 @@ import { colorStringForColorID } from "../reflect/model/colors";
 import { Room } from "./room";
 import { ShareInfo } from "./share";
 import {
+  LOOP_LENGTH_MS,
   getCurrentRow,
   getGame,
   getNextLoopStartTime,
@@ -79,10 +80,11 @@ function Grid({
   const [audioStartTime, setAudioStartTime] = useState<number>(-1);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [hoveredID, setHoveredID] = useState<string | null>(null);
-  const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
+  const [audioBuffersLoaded, setAudioBuffersLoaded] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext>();
   const analyserRef = useRef<AnalyserNode>();
+  const audioBuffersRef = useRef<AudioBuffer[]>();
   const presentClients = usePresentClients(room?.r);
   const [now, setNow] = useState(Date.now());
 
@@ -99,12 +101,12 @@ function Grid({
       audioStartTime !== -1 &&
       room &&
       room.type === "play" &&
-      (!game || getCurrentRow(game.startTime, now) === undefined)
+      (!game ||
+        getCurrentRow(game.startTime, now - 2 * LOOP_LENGTH_MS) === undefined)
     ) {
-      console.log(audioInitialized);
       void room.r.mutate.startGame();
     }
-  }, [room, audioInitialized, game, now]);
+  }, [room, audioStartTime, game, now]);
 
   const audioSamples = [
     "/samples/row-1-sample-1.mp3",
@@ -249,7 +251,8 @@ function Grid({
   const drawWaveform = () => {
     const audioContext = audioContextRef.current;
     const analyser = analyserRef.current;
-    if (!audioContext || !analyser) {
+    const audioBuffers = audioBuffersRef.current;
+    if (!audioContext || !analyser || !audioBuffers) {
       return;
     }
     const bufferLength = analyser.frequencyBinCount;
@@ -330,7 +333,8 @@ function Grid({
         return audioContext.decodeAudioData(arrayBuffer);
       })
     );
-    setAudioBuffers(buffers);
+    audioBuffersRef.current = buffers;
+    setAudioBuffersLoaded(true);
   };
 
   useEffect(() => {
@@ -360,7 +364,8 @@ function Grid({
   useEffect(() => {
     const audioContext = audioContextRef.current;
     const analyser = analyserRef.current;
-    if (!audioBuffers.length || !audioContext || !analyser) {
+    const audioBuffers = audioBuffersRef.current;
+    if (!audioBuffers || !audioContext || !analyser) {
       return;
     }
 
@@ -405,7 +410,7 @@ function Grid({
         }
       }
     }
-  }, [audioBuffers, enabledCells, sources, hoveredID]);
+  }, [audioBuffersLoaded, enabledCells, sources, hoveredID]);
 
   const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
 
