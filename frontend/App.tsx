@@ -5,10 +5,7 @@ import { Reflect } from "@rocicorp/reflect/client";
 import CursorField from "./CursorField";
 import { Rect } from "./coordinates";
 import { ShareInfo, ShareType, getShareURL } from "./share";
-import {
-  ClientRoomAssignment,
-  getClientRoomAssignment,
-} from "../reflect/model/orchestrator";
+import { getClientRoomAssignment } from "../reflect/model/orchestrator";
 import {
   getOrchstratorRoomID,
   getRandomPlayRoomID,
@@ -246,7 +243,13 @@ const createNewURL = () => {
   return url.toString();
 };
 
-const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
+const App = ({
+  shareInfo,
+  exclusive,
+}: {
+  shareInfo: ShareInfo | undefined;
+  exclusive: boolean;
+}) => {
   const roomAssignment = useRoomAssignment(shareInfo);
   const room = useRoom(shareInfo, roomAssignment);
 
@@ -278,7 +281,7 @@ const App = ({ shareInfo }: { shareInfo: ShareInfo | undefined }) => {
   return (
     <div ref={appRef}>
       <LoopLogo />
-      <Grid room={room} shareInfo={shareInfo} />
+      <Grid room={room} shareInfo={shareInfo} exclusive={exclusive} />
       <Footer
         onShare={
           shareInfo?.type === "snapshot" ? undefined : () => setModalOpen(true)

@@ -20,10 +20,6 @@ import { event } from "nextjs-google-analytics";
 
 const EMPTY_CELLS: Record<string, Cell> = {};
 
-function isExclusiveMode() {
-  return new URL(location.href).searchParams.get("exclusive") !== "false";
-}
-
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
   #gainNode: GainNode;
@@ -69,9 +65,11 @@ class SourceNode {
 function Grid({
   room,
   shareInfo,
+  exclusive,
 }: {
   room: Room | undefined;
   shareInfo: ShareInfo | undefined;
+  exclusive: boolean;
 }) {
   const selfColor = useSelfColor(room?.r);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
@@ -328,7 +326,6 @@ function Grid({
       return;
     }
 
-    const exclusive = isExclusiveMode();
     const hoveredCoords =
       hoveredID === undefined ? undefined : idToCoords(hoveredID);
     for (let y = 0; y < GRID_SIZE; y++) {
@@ -383,7 +380,7 @@ function Grid({
         }
       }
     }
-  }, [audioBuffers, enabledCells, sources, hoveredID]);
+  }, [audioBuffers, enabledCells, sources, hoveredID, exclusive]);
 
   const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
 
@@ -432,7 +429,7 @@ function Grid({
       room.r.mutate.setCellEnabled({
         id,
         enabled: !(id in enabledCells),
-        exclusive: isExclusiveMode(),
+        exclusive,
       });
       if (id in enabledCells) {
         event("toggle_cell_off", {
