@@ -6,10 +6,12 @@ import { getShareInfo } from "../frontend/share";
 export const getServerSideProps = (async (context) => {
   const s = context.query["s"];
   const r = context.query["r"];
+  const exclusive = context.query["exclusive"] !== "false";
   return {
     props: {
       s: (Array.isArray(s) ? s[0] : s) ?? "",
       r: (Array.isArray(r) ? r[0] : r) ?? "",
+      exclusive,
     },
   };
 }) satisfies GetServerSideProps<{
@@ -19,6 +21,7 @@ export const getServerSideProps = (async (context) => {
 export default function Home({
   s,
   r,
+  exclusive,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const shareInfo = getShareInfo(s, r);
   return (
@@ -35,7 +38,9 @@ export default function Home({
         />
         <meta
           property="og:description"
-          content="2^64 possibilities for your listening pleasure."
+          content={`${
+            exclusive ? "2^24" : "2^64"
+          } possibilities for your listening pleasure.`}
         />
         <meta
           property="og:image"
@@ -47,7 +52,7 @@ export default function Home({
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
-      <App shareInfo={shareInfo} />
+      <App shareInfo={shareInfo} exclusive={exclusive} />
     </>
   );
 }
