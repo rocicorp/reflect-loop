@@ -48,7 +48,7 @@ async function setCellEnabled(
   {
     id,
     enabled,
-    exclusive = false,
+    exclusive = true,
   }: { id: string; enabled: boolean; exclusive: boolean }
 ) {
   if (enabled) {

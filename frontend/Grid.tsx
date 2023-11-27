@@ -4,6 +4,7 @@ import {
   Cell,
   coordsToID,
   GRID_SIZE,
+  idToCoords,
   indexToID,
   listCells,
   NUM_CELLS,
@@ -18,6 +19,10 @@ import { ShareInfo } from "./share";
 import { event } from "nextjs-google-analytics";
 
 const EMPTY_CELLS: Record<string, Cell> = {};
+
+function isExclusiveMode() {
+  return new URL(location.href).searchParams.get("exclusive") !== "false";
+}
 
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
@@ -70,7 +75,7 @@ function Grid({
 }) {
   const selfColor = useSelfColor(room?.r);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
-  const [hoveredID, setHoveredID] = useState<string | null>(null);
+  const [hoveredID, setHoveredID] = useState<string>();
   const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
   const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -323,6 +328,9 @@ function Grid({
       return;
     }
 
+    const exclusive = isExclusiveMode();
+    const hoveredCoords =
+      hoveredID === undefined ? undefined : idToCoords(hoveredID);
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
         const id = coordsToID(x, y);
@@ -331,8 +339,19 @@ function Grid({
         const shouldBeActive = id === hoveredID || id in enabledCells;
         const added = shouldBeActive && !active;
         const deleted = active && !shouldBeActive;
-        const activeTargetGain =
-          hoveredID === null ? 1 : id === hoveredID ? 1 : 0.5;
+        const activeTargetGain = exclusive
+          ? hoveredCoords === undefined
+            ? 1
+            : id === hoveredID
+            ? 1
+            : hoveredCoords[1] === y
+            ? 0
+            : 0.5
+          : hoveredID === undefined
+          ? 1
+          : id === hoveredID
+          ? 1
+          : 0.5;
         if (active) {
           source.gain.setTargetAtTime(
             activeTargetGain,
@@ -382,7 +401,7 @@ function Grid({
   });
 
   const handleTouchEnd = handleIfPlayRoom(() => {
-    setHoveredID(null);
+    setHoveredID(undefined);
     if (longPressTimeoutHandle.current !== undefined) {
       clearTimeout(longPressTimeoutHandle.current);
       longPressTimeoutHandle.current = undefined;
@@ -403,23 +422,19 @@ function Grid({
       if (e.pointerType === "touch") {
         return;
       }
-      setHoveredID((existing) => (existing === id ? null : existing));
+      setHoveredID((existing) => (existing === id ? undefined : existing));
     }
   );
 
   const handleClick = handleIfPlayRoom((id: string) => {
-    setHoveredID(null);
+    setHoveredID(undefined);
     if (room?.type === "play") {
-      const exclusiveParam = new URL(location.href).searchParams.get(
-        "exclusive"
-      );
-      const exclusive = exclusiveParam === "true";
       room.r.mutate.setCellEnabled({
         id,
         enabled: !(id in enabledCells),
-        exclusive,
+        exclusive: isExclusiveMode(),
       });
-      if(id in enabledCells) {
+      if (id in enabledCells) {
         event("toggle_cell_off", {
           category: "Grid",
           action: "toggle off",
