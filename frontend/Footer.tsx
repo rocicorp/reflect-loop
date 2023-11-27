@@ -2,6 +2,7 @@ import classNames from "classnames";
 import styles from "./Footer.module.css";
 import Image from "next/image";
 import { MaybePromise } from "@rocicorp/reflect";
+import { event } from "nextjs-google-analytics";
 
 const Footer = ({
   ctaText,
@@ -17,11 +18,23 @@ const Footer = ({
   const handleCta = async () => {
     const url = await createCtaURL();
     window.location.href = url;
+    event("create_room", {
+      category: "Create",
+      action: "Create new loop room",
+      label: url,
+    });
   };
+  const handleReflectURL = () => {
+    event("visit_reflect", {
+      category: "Links",
+      action: "Click Reflect link",
+      label: "reflect.net",
+    });
+  }
   return (
     <footer className={styles.footer}>
       <div className={styles.footerContent}>
-        <a href={reflectUrl}>
+        <a href={reflectUrl} onClick={handleReflectURL}>
           <Image
             alt="Created with Reflect"
             src="/created-with-reflect.svg"

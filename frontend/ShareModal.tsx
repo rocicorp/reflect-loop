@@ -3,6 +3,7 @@ import styles from "./ShareModal.module.css";
 import Image from "next/image";
 import { MaybePromise } from "@rocicorp/reflect";
 import { ShareType } from "./share";
+import { event } from "nextjs-google-analytics";
 
 const Modal = ({
   isOpen,
@@ -19,6 +20,11 @@ const Modal = ({
     const url = await createShareURL(type);
     navigator.clipboard.writeText(url);
     onClose();
+    event("copy_shareurl", {
+      category: "Share",
+      action: "click copy url",
+      label: type,
+    });
   };
 
   // Close the modal if clicked outside of it
