@@ -270,12 +270,16 @@ const App = ({
       return createPlayURL();
     }
     if (type === "snapshot") {
-      return getShareURL(room.r, { type });
+      return getShareURL(room.r, { type }, exclusive);
     }
-    return getShareURL(room.r, {
-      type: "collaborate",
-      preferredRoomID: roomAssignment?.roomID,
-    });
+    return getShareURL(
+      room.r,
+      {
+        type: "collaborate",
+        preferredRoomID: roomAssignment?.roomID,
+      },
+      exclusive
+    );
   };
 
   return (
