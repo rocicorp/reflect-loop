@@ -1,4 +1,5 @@
 import { AppProps } from "next/app";
+import { GoogleAnalytics } from "nextjs-google-analytics";
 import "../frontend/global.css";
 
 export default function App({
@@ -8,6 +9,7 @@ export default function App({
 }: AppProps) {
   return (
     <>
+      <GoogleAnalytics trackPageViews />
       <Component {...pageProps} />
     </>
   );

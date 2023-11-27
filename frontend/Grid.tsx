@@ -15,6 +15,7 @@ import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors";
 import { Room } from "./room";
 import { ShareInfo } from "./share";
+import { event } from "nextjs-google-analytics";
 
 const EMPTY_CELLS: Record<string, Cell> = {};
 
@@ -418,6 +419,19 @@ function Grid({
         enabled: !(id in enabledCells),
         exclusive,
       });
+      if(id in enabledCells) {
+        event("toggle_cell_off", {
+          category: "Grid",
+          action: "toggle off",
+          label: id,
+        });
+      } else {
+        event("toggle_cell_on", {
+          category: "Grid",
+          action: "toggle on",
+          label: id,
+        });
+      }
     }
   });
 
