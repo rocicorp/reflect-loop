@@ -256,7 +256,7 @@ const App = ({
   return (
     <div ref={appRef} className={styles.app}>
       <div ref={copyMessageRef} className={styles.copyMessage}>
-        Link Copied to Clipboard
+        Link copied to clipboard
       </div>
       <LoopLogo />
       <Grid room={room} shareInfo={shareInfo} exclusive={exclusive} />

@@ -2,6 +2,10 @@
   opacity: 0;
   text-align: center;
   flex: 1 1 0;
+  color: #00FFA3;
+  font-weight: 500;
+  background: transparent url(/check.svg) no-repeat left 3px;
+  padding-left: 2rem;
 }
 
 .app {
