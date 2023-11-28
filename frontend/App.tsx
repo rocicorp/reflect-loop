@@ -27,8 +27,6 @@ const playServer =
 const shareServer =
   process.env.NEXT_PUBLIC_SHARE_SERVER ?? "http://127.0.0.1:8080/";
 
-export type CursorTextOverride = { text: string; expires: number };
-const CURSOR_TEXT_OVERRIDE_DURATION_MS = 3000;
 type RoomAssignment = { roomID: string; color: string };
 
 function useRoomAssignment(shareInfo: ShareInfo | undefined) {
@@ -196,6 +194,15 @@ const createNewURL = () => {
   return url.toString();
 };
 
+const animateMessage = (messageDiv: HTMLDivElement | null) => {
+  messageDiv?.animate(
+    [{ opacity: "1" }, { opacity: "1", offset: 0.8 }, { opacity: "0" }],
+    {
+      duration: 2500,
+    }
+  );
+};
+
 const App = ({
   shareInfo,
   exclusive,
@@ -210,8 +217,7 @@ const App = ({
   const [appRef, appRect] = useElementSize<HTMLDivElement>([windowSize]);
   const [docRect, setDocRect] = useState<Rect | null>(null);
   const copyMessageRef = useRef<HTMLDivElement>(null);
-  const [selfCursorOverride, setSelfCursorOverride] =
-    useState<CursorTextOverride>();
+  const createMessageRef = useRef<HTMLDivElement>(null);
 
   const [isModalOpen, setModalOpen] = useState(false);
 
@@ -246,40 +252,33 @@ const App = ({
       action: "click copy url",
       label: type,
     });
-    const copyMessage = copyMessageRef.current;
-    if (copyMessage) {
-      copyMessage.animate(
-        [{ opacity: "1" }, { opacity: "1", offset: 0.8 }, { opacity: "0" }],
-        {
-          duration: 2500,
-        }
-      );
+    animateMessage(copyMessageRef.current);
+  };
+
+  const handleCellClick = () => {
+    if (shareInfo?.type === "snapshot") {
+      animateMessage(createMessageRef.current);
     }
   };
 
   return (
     <div ref={appRef} className={styles.app}>
-      <div ref={copyMessageRef} className={styles.copyMessage}>
-        Link copied to clipboard
+      <div className={styles.message}>
+        <div ref={copyMessageRef} className={styles.copyMessage}>
+          <div className={styles.copyMessageContent}>
+            Link copied to clipboard
+          </div>
+        </div>
+        <div ref={createMessageRef} className={styles.createMessage}>
+          Tap Create below to make your own!
+        </div>
       </div>
       <LoopLogo />
       <Grid
         room={room}
         shareInfo={shareInfo}
         exclusive={exclusive}
-        onCellClick={() => {
-          console.log("cell click");
-          if (shareInfo?.type === "snapshot") {
-            console.log({
-              text: "Tap Create below to make your own.",
-              expires: Date.now() + CURSOR_TEXT_OVERRIDE_DURATION_MS,
-            });
-            setSelfCursorOverride({
-              text: "Tap Create below to make your own.",
-              expires: Date.now() + CURSOR_TEXT_OVERRIDE_DURATION_MS,
-            });
-          }
-        }}
+        onCellClick={handleCellClick}
       />
       <Footer
         onShare={
@@ -298,12 +297,7 @@ const App = ({
         onClose={() => setModalOpen(false)}
       />
       {room && appRect && docRect ? (
-        <CursorField
-          r={room.r}
-          appRect={appRect}
-          docRect={docRect}
-          selfCursorOverride={selfCursorOverride}
-        />
+        <CursorField r={room.r} appRect={appRect} docRect={docRect} />
       ) : null}
     </div>
   );
