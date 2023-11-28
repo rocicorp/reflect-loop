@@ -34,7 +34,13 @@ const Footer = ({
   return (
     <footer className={styles.footer}>
       <div className={styles.footerContent}>
-        <a href={reflectUrl} onClick={handleReflectURL}>
+        <a
+          href={reflectUrl}
+          onClick={(e) => {
+            handleReflectURL();
+            e.stopPropagation();
+          }}
+        >
           <Image
             alt="Created with Reflect"
             src="/created-with-reflect.svg"
@@ -46,12 +52,21 @@ const Footer = ({
         </a>
         <div className={styles.footerLinks}>
           {onShare ? (
-            <button onClick={onShare} className={styles.footerShare}>
+            <button
+              onClick={(e) => {
+                onShare();
+                e.stopPropagation();
+              }}
+              className={styles.footerShare}
+            >
               Share
             </button>
           ) : null}
           <button
-            onClick={handleCta}
+            onClick={(e) => {
+              handleCta();
+              e.stopPropagation();
+            }}
             className={classNames(styles.footerLink, styles.primaryCta)}
           >
             {ctaText}

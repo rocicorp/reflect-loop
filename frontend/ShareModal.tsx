@@ -29,6 +29,7 @@ const Modal = ({
       ) {
         onClose();
       }
+      event.stopPropagation();
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -44,7 +45,13 @@ const Modal = ({
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContent} ref={modalRef}>
-        <button className={styles.closeBtn} onClick={onClose}></button>
+        <button
+          className={styles.closeBtn}
+          onClick={(e) => {
+            onClose();
+            e.stopPropagation();
+          }}
+        ></button>
         <h2 className={styles.modalTitle}>Share</h2>
         <div className={styles.shareOptionsContainer}>
           <div className={styles.shareOption}>
@@ -59,8 +66,9 @@ const Modal = ({
             <p>Current state, read only.</p>
             <button
               className={styles.shareCta}
-              onClick={() => {
+              onClick={(e) => {
                 copyShareAndClose("snapshot");
+                e.stopPropagation();
               }}
             >
               Copy Link
@@ -78,8 +86,9 @@ const Modal = ({
             <p>Viewers can edit, collaborate.</p>
             <button
               className={styles.shareCta}
-              onClick={() => {
+              onClick={(e) => {
                 copyShareAndClose("collaborate");
+                e.stopPropagation();
               }}
             >
               Copy Link
