@@ -27,6 +27,8 @@ const playServer =
 const shareServer =
   process.env.NEXT_PUBLIC_SHARE_SERVER ?? "http://127.0.0.1:8080/";
 
+export type CursorTextOverride = { text: string; expires: number };
+const CURSOR_TEXT_OVERRIDE_DURATION_MS = 3000;
 type RoomAssignment = { roomID: string; color: string };
 
 function useRoomAssignment(shareInfo: ShareInfo | undefined) {
@@ -208,6 +210,8 @@ const App = ({
   const [appRef, appRect] = useElementSize<HTMLDivElement>([windowSize]);
   const [docRect, setDocRect] = useState<Rect | null>(null);
   const copyMessageRef = useRef<HTMLDivElement>(null);
+  const [selfCursorOverride, setSelfCursorOverride] =
+    useState<CursorTextOverride>();
 
   const [isModalOpen, setModalOpen] = useState(false);
 
@@ -259,7 +263,24 @@ const App = ({
         Link copied to clipboard
       </div>
       <LoopLogo />
-      <Grid room={room} shareInfo={shareInfo} exclusive={exclusive} />
+      <Grid
+        room={room}
+        shareInfo={shareInfo}
+        exclusive={exclusive}
+        onCellClick={() => {
+          console.log("cell click");
+          if (shareInfo?.type === "snapshot") {
+            console.log({
+              text: "Tap Create below to make your own.",
+              expires: Date.now() + CURSOR_TEXT_OVERRIDE_DURATION_MS,
+            });
+            setSelfCursorOverride({
+              text: "Tap Create below to make your own.",
+              expires: Date.now() + CURSOR_TEXT_OVERRIDE_DURATION_MS,
+            });
+          }
+        }}
+      />
       <Footer
         onShare={
           shareInfo?.type === "snapshot" ? undefined : () => setModalOpen(true)
@@ -277,7 +298,12 @@ const App = ({
         onClose={() => setModalOpen(false)}
       />
       {room && appRect && docRect ? (
-        <CursorField r={room.r} appRect={appRect} docRect={docRect} />
+        <CursorField
+          r={room.r}
+          appRect={appRect}
+          docRect={docRect}
+          selfCursorOverride={selfCursorOverride}
+        />
       ) : null}
     </div>
   );

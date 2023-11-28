@@ -13,15 +13,18 @@ import { ClientID } from "@rocicorp/reflect";
 import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors";
 import { SHARE_M } from "../reflect/share/mutators";
+import { CursorTextOverride } from "./App";
 
 export default function CursorField({
   r,
   appRect,
   docRect,
+  selfCursorOverride,
 }: {
   r: Reflect<SHARE_M>;
   appRect: Rect;
   docRect: Rect;
+  selfCursorOverride: CursorTextOverride | undefined;
 }) {
   useEffect(() => {
     const mouseMoveHandler = ({
@@ -63,6 +66,7 @@ export default function CursorField({
           key={client.id}
           appRect={appRect}
           docRect={docRect}
+          selfCursorOverride={selfCursorOverride}
         />
       ))}
     </>
@@ -74,16 +78,23 @@ function Cursor({
   client,
   appRect,
   docRect,
+  selfCursorOverride,
 }: {
   selfClientID: ClientID;
   client: Client;
   appRect: Rect;
   docRect: Rect;
+  selfCursorOverride: CursorTextOverride | undefined;
 }) {
   const { cursor, color, location } = client;
 
   if (!cursor) return null;
-
+  const cursorTextOverride =
+    client.id === selfClientID &&
+    selfCursorOverride &&
+    selfCursorOverride.expires > Date.now()
+      ? selfCursorOverride.text
+      : undefined;
   const colorString = colorStringForColorID(color);
   const cursorCoordinates = coordinateToPosition(cursor, appRect, docRect);
   return (
@@ -119,7 +130,7 @@ function Cursor({
         }}
       >
         <div className={styles.locationName}>
-          {displayStringForLocation(location)}
+          {cursorTextOverride ?? displayStringForLocation(location)}
         </div>
       </div>
     </div>

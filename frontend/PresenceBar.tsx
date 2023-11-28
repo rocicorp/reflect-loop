@@ -6,7 +6,6 @@ import { Client } from "../reflect/model/client";
 import { colorStringForColorID } from "../reflect/model/colors";
 import { PLAY_M } from "../reflect/play/mutators";
 import { SHARE_M } from "../reflect/share/mutators";
-import classNames from "classnames";
 import { useElementSize, useWindowSize } from "./sizeHooks";
 
 // includes border and margin
@@ -61,11 +60,5 @@ function PresenceAvatar({ client }: { client: Client }) {
 }
 
 function PresenceOverflow({ number }: { number: number }) {
-  return (
-    <span
-      className={styles.presenceOverflow}
-    >
-      {`+${number}`}
-    </span>
-  );
+  return <span className={styles.presenceOverflow}>{`+${number}`}</span>;
 }
