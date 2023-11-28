@@ -1,11 +1,29 @@
+.message {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 0;
+}
+
 .copyMessage {
   opacity: 0;
-  text-align: center;
-  flex: 1 1 0;
-  color: #00FFA3;
+  color: #00ffa3;
   font-weight: 500;
+  display: flex;
+  flex: 1 0 100%;
+  justify-content: center;
+}
+
+.copyMessageContent {
   background: transparent url(/check.svg) no-repeat left 3px;
   padding-left: 2rem;
+}
+
+.createMessage {
+  opacity: 0;
+  color: #00ffa3;
+  font-weight: 500;
+  margin-left: -100%;
+  flex: 1 0 100%;
 }
 
 .app {

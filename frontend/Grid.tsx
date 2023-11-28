@@ -20,7 +20,7 @@ import { event } from "nextjs-google-analytics";
 
 export const LOOP_LENGTH_MS = 8 * 1000;
 
-export function getNextLoopStartTime(now: number) {
+function getNextLoopStartTime(now: number) {
   if (now % LOOP_LENGTH_MS === 0) {
     return 0;
   }
