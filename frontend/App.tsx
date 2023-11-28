@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Grid from "./Grid";
 import Footer from "./Footer";
 import { Reflect } from "@rocicorp/reflect/client";
@@ -16,6 +16,7 @@ import { orchestratorMutators } from "../reflect/orchestrator/mutators";
 import { Room } from "./room";
 import LoopLogo from "./LoopLogo";
 import ShareModal from "./ShareModal";
+import { useElementSize, useWindowSize } from "./sizeHooks";
 
 const orchestratorServer =
   process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER ?? "http://127.0.0.1:8080/";
@@ -174,58 +175,6 @@ function useRoom(
   }, [shareInfo, roomAssignment]);
 
   return room;
-}
-
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
-
-function useWindowSize() {
-  const [windowSize, setWindowSize] = useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  useIsomorphicLayoutEffect(() => {
-    setWindowSize(getWindowSize());
-
-    const handleWindowResize = () => {
-      setWindowSize(getWindowSize());
-    };
-    window.addEventListener("resize", handleWindowResize);
-
-    return () => {
-      window.removeEventListener("resize", handleWindowResize);
-    };
-  }, []);
-  return windowSize;
-}
-
-function getWindowSize() {
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  };
-}
-
-function useElementSize<T extends Element>(deps: unknown[]) {
-  const ref = useRef<T>(null);
-  const [rect, setRect] = useState<Rect | null>(null);
-  useIsomorphicLayoutEffect(() => {
-    if (!ref.current) {
-      return;
-    }
-
-    const cr = ref.current.getBoundingClientRect();
-    setRect(
-      new Rect(
-        cr.left + ref.current.ownerDocument.documentElement.scrollLeft,
-        cr.top + ref.current.ownerDocument.documentElement.scrollTop,
-        cr.width,
-        cr.height
-      )
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
-  return [ref, rect] as const;
 }
 
 const createPlayURL = () => {

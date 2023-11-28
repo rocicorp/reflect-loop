@@ -152,13 +152,12 @@ function Grid({
   const [audioBuffersLoaded, setAudioBuffersLoaded] = useState<boolean>(false);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
   const [tillAudioStart, setTillAudioStart] = useState<number>();
-
   const [hoveredID, setHoveredID] = useState<string>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext>();
   const analyserRef = useRef<AnalyserNode>();
   const audioBuffersRef = useRef<AudioBuffer[]>();
-  const sources = useRef<Record<string, SourceNode>>({});
+  const sourcesRef = useRef<Record<string, SourceNode>>({});
 
   useEffect(() => {
     const audioContext = new AudioContext();
@@ -353,7 +352,7 @@ function Grid({
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
         const id = coordsToID(x, y);
-        const source = sources.current[id];
+        const source = sourcesRef.current[id];
         const active = source && source.playing;
         const shouldBeActive = id === hoveredID || id in enabledCells;
         const added = shouldBeActive && !active;
@@ -389,16 +388,16 @@ function Grid({
           gain.setTargetAtTime(activeTargetGain, audioContext.currentTime, 0.2);
           source.start(0, audioContext.currentTime % audioBuffers[0].duration);
 
-          sources.current[id] = source;
+          sourcesRef.current[id] = source;
         }
         if (deleted) {
-          const source = sources.current[id];
+          const source = sourcesRef.current[id];
           source.gain.setTargetAtTime(0, audioContext.currentTime, 0.2);
           source.stop(audioContext.currentTime + 1);
           setTimeout(() => {
             source.disconnect();
           }, 5000);
-          delete sources.current[id];
+          delete sourcesRef.current[id];
         }
       }
     }
