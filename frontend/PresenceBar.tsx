@@ -68,7 +68,7 @@ function PresenceAvatar({ client }: { client: Client }) {
 function PresenceOverflow({ number }: { number: number }) {
   return (
     <span
-      className={classNames(styles.presenceAvatar, styles.PresenceOverflow)}
+      className={styles.presenceOverflow}
     >
       {`+${number}`}
     </span>
