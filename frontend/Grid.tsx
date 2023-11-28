@@ -142,10 +142,12 @@ function Grid({
   room,
   shareInfo,
   exclusive,
+  onCellClick,
 }: {
   room: Room | undefined;
   shareInfo: ShareInfo | undefined;
   exclusive: boolean;
+  onCellClick: () => void;
 }) {
   const selfColor = useSelfColor(room?.r);
 
@@ -534,7 +536,10 @@ function Grid({
               }}
               onTouchStart={() => handleTouchStart?.(id)}
               onTouchEnd={() => handleTouchEnd?.()}
-              onClick={() => handleClick?.(id)}
+              onClick={() => {
+                onCellClick();
+                handleClick?.(id);
+              }}
             >
               <div
                 className={styles.cellHighlight}
