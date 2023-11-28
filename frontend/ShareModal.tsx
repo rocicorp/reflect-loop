@@ -1,30 +1,23 @@
 import React, { useEffect, useRef } from "react";
 import styles from "./ShareModal.module.css";
 import Image from "next/image";
-import { MaybePromise } from "@rocicorp/reflect";
 import { ShareType } from "./share";
-import { event } from "nextjs-google-analytics";
+import { MaybePromise } from "@rocicorp/reflect";
 
 const Modal = ({
   isOpen,
   onClose,
-  createShareURL,
+  copyShareURL,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  createShareURL: (type: ShareType) => MaybePromise<string>;
+  copyShareURL: (type: ShareType) => MaybePromise<void>;
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   const copyShareAndClose = async (type: ShareType) => {
-    const url = await createShareURL(type);
-    navigator.clipboard.writeText(url);
+    copyShareURL(type);
     onClose();
-    event("copy_shareurl", {
-      category: "Share",
-      action: "click copy url",
-      label: type,
-    });
   };
 
   // Close the modal if clicked outside of it

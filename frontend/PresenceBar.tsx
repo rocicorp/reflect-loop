@@ -12,6 +12,7 @@ import { useElementSize, useWindowSize } from "./sizeHooks";
 // includes border and margin
 // 32 width + 3 left border + 3 right border + 8 right margin
 const AVATAR_WIDTH_PX = 46;
+const MARGIN_RIGHT_PX = 8;
 
 export default function PresenceAvatars({
   r,
@@ -24,16 +25,10 @@ export default function PresenceAvatars({
   ]);
 
   const numToDisplay = containerRect
-    ? Math.floor((containerRect.width + 8) / AVATAR_WIDTH_PX)
+    ? Math.floor((containerRect.width + MARGIN_RIGHT_PX) / AVATAR_WIDTH_PX)
     : 8;
 
   const presentClients = usePresentClients(r);
-  console.log(
-    "presentClients.length",
-    presentClients.length,
-    "numToDisplay",
-    numToDisplay
-  );
   return (
     <div ref={containerRef} className={styles.container}>
       {presentClients
