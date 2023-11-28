@@ -10,7 +10,8 @@ export async function getShareURL(
   r: Reflect<PLAY_M | SHARE_M>,
   config:
     | { type: "snapshot" }
-    | { type: "collaborate"; preferredRoomID: string | undefined }
+    | { type: "collaborate"; preferredRoomID: string | undefined },
+  exclusive: boolean
 ) {
   const url = new URL(window.location.href);
   url.search = "";
@@ -20,6 +21,9 @@ export async function getShareURL(
   url.searchParams.set("s", cellsEncoded);
   if (config.type === "collaborate") {
     url.searchParams.set("r", config.preferredRoomID ?? getRandomPlayRoomID());
+  }
+  if (!exclusive) {
+    url.searchParams.set("exclusive", "false");
   }
   console.log(config, url.toString());
   return url.toString();
