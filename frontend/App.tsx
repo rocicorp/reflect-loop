@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Grid from "./Grid";
 import Footer from "./Footer";
 import { Reflect } from "@rocicorp/reflect/client";
@@ -17,6 +17,8 @@ import { Room } from "./room";
 import LoopLogo from "./LoopLogo";
 import ShareModal from "./ShareModal";
 import { useElementSize, useWindowSize } from "./sizeHooks";
+import { event } from "nextjs-google-analytics";
+import styles from "./App.module.css";
 
 const orchestratorServer =
   process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER ?? "http://127.0.0.1:8080/";
@@ -205,6 +207,7 @@ const App = ({
   const windowSize = useWindowSize();
   const [appRef, appRect] = useElementSize<HTMLDivElement>([windowSize]);
   const [docRect, setDocRect] = useState<Rect | null>(null);
+  const copyMessageRef = useRef<HTMLDivElement>(null);
 
   const [isModalOpen, setModalOpen] = useState(false);
 
@@ -214,7 +217,7 @@ const App = ({
     );
   }, [windowSize]);
 
-  const createShareURL = async (type: ShareType) => {
+  const createShareURL = (type: ShareType) => {
     if (!room) {
       return createPlayURL();
     }
@@ -231,8 +234,30 @@ const App = ({
     );
   };
 
+  const copyShareURL = async (type: ShareType) => {
+    const url = await createShareURL(type);
+    navigator.clipboard.writeText(url);
+    event("copy_shareurl", {
+      category: "Share",
+      action: "click copy url",
+      label: type,
+    });
+    const copyMessage = copyMessageRef.current;
+    if (copyMessage) {
+      copyMessage.animate(
+        [{ opacity: "1" }, { opacity: "1", offset: 0.8 }, { opacity: "0" }],
+        {
+          duration: 2500,
+        }
+      );
+    }
+  };
+
   return (
-    <div ref={appRef}>
+    <div ref={appRef} className={styles.app}>
+      <div ref={copyMessageRef} className={styles.copyMessage}>
+        Link Copied to Clipboard
+      </div>
       <LoopLogo />
       <Grid room={room} shareInfo={shareInfo} exclusive={exclusive} />
       <Footer
@@ -245,9 +270,10 @@ const App = ({
         }
         reflectUrl="https://reflect.net"
       />
+      <div className={styles.footerSpacer}></div>
       <ShareModal
         isOpen={isModalOpen}
-        createShareURL={createShareURL}
+        copyShareURL={copyShareURL}
         onClose={() => setModalOpen(false)}
       />
       {room && appRect && docRect ? (

@@ -1,0 +1,16 @@
+.copyMessage {
+  opacity: 0;
+  text-align: center;
+  flex: 1 1 0;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+}
+
+.footerSpacer {
+  flex: 1 1 0;
+}

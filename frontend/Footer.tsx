@@ -30,7 +30,7 @@ const Footer = ({
       action: "Click Reflect link",
       label: "reflect.net",
     });
-  }
+  };
   return (
     <footer className={styles.footer}>
       <div className={styles.footerContent}>
