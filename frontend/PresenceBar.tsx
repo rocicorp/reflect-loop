@@ -7,28 +7,48 @@ import { colorStringForColorID } from "../reflect/model/colors";
 import { PLAY_M } from "../reflect/play/mutators";
 import { SHARE_M } from "../reflect/share/mutators";
 import classNames from "classnames";
+import { useElementSize, useWindowSize } from "./sizeHooks";
+
+// includes border and margin
+// 32 width + 3 left border + 3 right border + 8 right margin
+const AVATAR_WIDTH_PX = 46;
 
 export default function PresenceAvatars({
   r,
 }: {
   r: Reflect<PLAY_M | SHARE_M> | undefined;
 }) {
+  const windowSize = useWindowSize();
+  const [containerRef, containerRect] = useElementSize<HTMLDivElement>([
+    windowSize,
+  ]);
+
+  const numToDisplay = containerRect
+    ? Math.floor((containerRect.width + 8) / AVATAR_WIDTH_PX)
+    : 8;
+
   const presentClients = usePresentClients(r);
+  console.log(
+    "presentClients.length",
+    presentClients.length,
+    "numToDisplay",
+    numToDisplay
+  );
   return (
-    <>
+    <div ref={containerRef} className={styles.container}>
       {presentClients
-        .slice(0, 8)
+        .slice(0, numToDisplay)
         .map((client, i) =>
-          i === 8 && presentClients.length > 8 ? (
+          i === numToDisplay - 1 && presentClients.length > numToDisplay ? (
             <PresenceOverflow
-              number={presentClients.length - 7}
+              number={presentClients.length - numToDisplay + 1}
               key={"overflow"}
             />
           ) : (
             <PresenceAvatar client={client} key={client.id} />
           )
         )}
-    </>
+    </div>
   );
 }
 
