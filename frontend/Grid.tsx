@@ -11,12 +11,21 @@ import {
 } from "../reflect/model/cell";
 import { useSubscribe } from "replicache-react";
 import { useSelfColor } from "../reflect/subscriptions";
-import PresenceBar from "./PresenceBar";
+import PresenceAvatars from "./PresenceBar";
 import classNames from "classnames";
 import { colorStringForColorID } from "../reflect/model/colors";
 import { Room } from "./room";
 import { ShareInfo } from "./share";
 import { event } from "nextjs-google-analytics";
+
+export const LOOP_LENGTH_MS = 8 * 1000;
+
+export function getNextLoopStartTime(now: number) {
+  if (now % LOOP_LENGTH_MS === 0) {
+    return 0;
+  }
+  return now + LOOP_LENGTH_MS - (now % LOOP_LENGTH_MS);
+}
 
 const EMPTY_CELLS: Record<string, Cell> = {};
 
@@ -62,6 +71,73 @@ class SourceNode {
   }
 }
 
+const audioSamples = [
+  "/samples/row-1-sample-1.mp3",
+  "/samples/row-1-sample-2.mp3",
+  "/samples/row-1-sample-3.mp3",
+  "/samples/row-1-sample-4.mp3",
+  "/samples/row-1-sample-5.mp3",
+  "/samples/row-1-sample-6.mp3",
+  "/samples/row-1-sample-7.mp3",
+  "/samples/row-1-sample-8.mp3",
+  "/samples/row-2-sample-1.mp3",
+  "/samples/row-2-sample-2.mp3",
+  "/samples/row-2-sample-3.mp3",
+  "/samples/row-2-sample-4.mp3",
+  "/samples/row-2-sample-5.mp3",
+  "/samples/row-2-sample-6.mp3",
+  "/samples/row-2-sample-7.mp3",
+  "/samples/row-2-sample-8.mp3",
+  "/samples/row-3-sample-1.mp3",
+  "/samples/row-3-sample-2.mp3",
+  "/samples/row-3-sample-3.mp3",
+  "/samples/row-3-sample-4.mp3",
+  "/samples/row-3-sample-5.mp3",
+  "/samples/row-3-sample-6.mp3",
+  "/samples/row-3-sample-7.mp3",
+  "/samples/row-3-sample-8.mp3",
+  "/samples/row-4-sample-1.mp3",
+  "/samples/row-4-sample-2.mp3",
+  "/samples/row-4-sample-3.mp3",
+  "/samples/row-4-sample-4.mp3",
+  "/samples/row-4-sample-5.mp3",
+  "/samples/row-4-sample-6.mp3",
+  "/samples/row-4-sample-7.mp3",
+  "/samples/row-4-sample-8.mp3",
+  "/samples/row-5-sample-1.mp3",
+  "/samples/row-5-sample-2.mp3",
+  "/samples/row-5-sample-3.mp3",
+  "/samples/row-5-sample-4.mp3",
+  "/samples/row-5-sample-5.mp3",
+  "/samples/row-5-sample-6.mp3",
+  "/samples/row-5-sample-7.mp3",
+  "/samples/row-5-sample-8.mp3",
+  "/samples/row-6-sample-1.mp3",
+  "/samples/row-6-sample-2.mp3",
+  "/samples/row-6-sample-3.mp3",
+  "/samples/row-6-sample-4.mp3",
+  "/samples/row-6-sample-5.mp3",
+  "/samples/row-6-sample-6.mp3",
+  "/samples/row-6-sample-7.mp3",
+  "/samples/row-6-sample-8.mp3",
+  "/samples/row-7-sample-1.mp3",
+  "/samples/row-7-sample-2.mp3",
+  "/samples/row-7-sample-3.mp3",
+  "/samples/row-7-sample-4.mp3",
+  "/samples/row-7-sample-5.mp3",
+  "/samples/row-7-sample-6.mp3",
+  "/samples/row-7-sample-7.mp3",
+  "/samples/row-7-sample-8.mp3",
+  "/samples/row-8-sample-1.mp3",
+  "/samples/row-8-sample-2.mp3",
+  "/samples/row-8-sample-3.mp3",
+  "/samples/row-8-sample-4.mp3",
+  "/samples/row-8-sample-5.mp3",
+  "/samples/row-8-sample-6.mp3",
+  "/samples/row-8-sample-7.mp3",
+  "/samples/row-8-sample-8.mp3",
+];
+
 function Grid({
   room,
   shareInfo,
@@ -72,83 +148,22 @@ function Grid({
   exclusive: boolean;
 }) {
   const selfColor = useSelfColor(room?.r);
+
+  const [audioBuffersLoaded, setAudioBuffersLoaded] = useState<boolean>(false);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
+  const [tillAudioStart, setTillAudioStart] = useState<number>();
+
   const [hoveredID, setHoveredID] = useState<string>();
-  const [audioBuffers, setAudioBuffers] = useState<AudioBuffer[]>([]);
-  const [redrawTrigger, setRedrawTrigger] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext>();
   const analyserRef = useRef<AnalyserNode>();
-
-  const audioSamples = [
-    "/samples/row-1-sample-1.mp3",
-    "/samples/row-1-sample-2.mp3",
-    "/samples/row-1-sample-3.mp3",
-    "/samples/row-1-sample-4.mp3",
-    "/samples/row-1-sample-5.mp3",
-    "/samples/row-1-sample-6.mp3",
-    "/samples/row-1-sample-7.mp3",
-    "/samples/row-1-sample-8.mp3",
-    "/samples/row-2-sample-1.mp3",
-    "/samples/row-2-sample-2.mp3",
-    "/samples/row-2-sample-3.mp3",
-    "/samples/row-2-sample-4.mp3",
-    "/samples/row-2-sample-5.mp3",
-    "/samples/row-2-sample-6.mp3",
-    "/samples/row-2-sample-7.mp3",
-    "/samples/row-2-sample-8.mp3",
-    "/samples/row-3-sample-1.mp3",
-    "/samples/row-3-sample-2.mp3",
-    "/samples/row-3-sample-3.mp3",
-    "/samples/row-3-sample-4.mp3",
-    "/samples/row-3-sample-5.mp3",
-    "/samples/row-3-sample-6.mp3",
-    "/samples/row-3-sample-7.mp3",
-    "/samples/row-3-sample-8.mp3",
-    "/samples/row-4-sample-1.mp3",
-    "/samples/row-4-sample-2.mp3",
-    "/samples/row-4-sample-3.mp3",
-    "/samples/row-4-sample-4.mp3",
-    "/samples/row-4-sample-5.mp3",
-    "/samples/row-4-sample-6.mp3",
-    "/samples/row-4-sample-7.mp3",
-    "/samples/row-4-sample-8.mp3",
-    "/samples/row-5-sample-1.mp3",
-    "/samples/row-5-sample-2.mp3",
-    "/samples/row-5-sample-3.mp3",
-    "/samples/row-5-sample-4.mp3",
-    "/samples/row-5-sample-5.mp3",
-    "/samples/row-5-sample-6.mp3",
-    "/samples/row-5-sample-7.mp3",
-    "/samples/row-5-sample-8.mp3",
-    "/samples/row-6-sample-1.mp3",
-    "/samples/row-6-sample-2.mp3",
-    "/samples/row-6-sample-3.mp3",
-    "/samples/row-6-sample-4.mp3",
-    "/samples/row-6-sample-5.mp3",
-    "/samples/row-6-sample-6.mp3",
-    "/samples/row-6-sample-7.mp3",
-    "/samples/row-6-sample-8.mp3",
-    "/samples/row-7-sample-1.mp3",
-    "/samples/row-7-sample-2.mp3",
-    "/samples/row-7-sample-3.mp3",
-    "/samples/row-7-sample-4.mp3",
-    "/samples/row-7-sample-5.mp3",
-    "/samples/row-7-sample-6.mp3",
-    "/samples/row-7-sample-7.mp3",
-    "/samples/row-7-sample-8.mp3",
-    "/samples/row-8-sample-1.mp3",
-    "/samples/row-8-sample-2.mp3",
-    "/samples/row-8-sample-3.mp3",
-    "/samples/row-8-sample-4.mp3",
-    "/samples/row-8-sample-5.mp3",
-    "/samples/row-8-sample-6.mp3",
-    "/samples/row-8-sample-7.mp3",
-    "/samples/row-8-sample-8.mp3",
-  ];
+  const audioBuffersRef = useRef<AudioBuffer[]>();
+  const sources = useRef<Record<string, SourceNode>>({});
 
   useEffect(() => {
     const audioContext = new AudioContext();
+    // always start of suspended til user clicks
+    audioContext.suspend();
     audioContextRef.current = audioContext;
     const analyser = audioContext.createAnalyser();
     analyserRef.current = analyser;
@@ -158,12 +173,23 @@ function Grid({
       setAudioInitialized(audioContext.state === "running");
     };
     audioContext.addEventListener("statechange", handler);
+    (async () => {
+      const loadBuffers: () => Promise<AudioBuffer[]> = () =>
+        Promise.all(
+          audioSamples.map(async (url) => {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            return audioContext.decodeAudioData(arrayBuffer);
+          })
+        ).catch(loadBuffers);
+      audioBuffersRef.current = await loadBuffers();
+      setAudioBuffersLoaded(true);
+    })();
+
     return () => {
       audioContext.removeEventListener("statechange", handler);
     };
   }, []);
-
-  useEffect(() => {}, []);
 
   // This enables audio on click.
   useEffect(() => {
@@ -200,6 +226,17 @@ function Grid({
       }
       try {
         await audioContext.resume();
+        await audioContext.suspend();
+        const nextLoopStart = getNextLoopStartTime(Date.now());
+        const till = nextLoopStart - Date.now();
+        setTillAudioStart(till);
+        const intervalID = setInterval(() => {
+          setTillAudioStart(nextLoopStart - Date.now());
+        }, 500);
+        setTimeout(async () => {
+          clearInterval(intervalID);
+          await audioContext.resume();
+        }, till);
         removeEventListeners();
       } catch (e) {
         console.error("Failed to start audio context", e);
@@ -219,15 +256,13 @@ function Grid({
   const drawWaveform = () => {
     const audioContext = audioContextRef.current;
     const analyser = analyserRef.current;
-    if (!audioContext || !analyser) {
+    const audioBuffers = audioBuffersRef.current;
+    const canvas = canvasRef.current;
+    if (!audioContext || !analyser || !audioBuffers || !canvas) {
       return;
     }
     const bufferLength = analyser.frequencyBinCount;
     const dataArray = new Uint8Array(bufferLength);
-
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
     const canvasCtx = canvas.getContext("2d")!;
     const width = canvas.width;
     const height = canvas.height;
@@ -273,35 +308,23 @@ function Grid({
       canvasCtx.fillStyle = "rgba(255, 255, 255, 0.1)";
       canvasCtx.fillRect(0, 0, progressBarWidth, height);
     }
-
-    requestAnimationFrame(drawWaveform);
   };
 
   useEffect(() => {
-    drawWaveform();
+    let done = false;
+    const onFrame = () => {
+      drawWaveform();
+      if (done) {
+        return;
+      }
+      requestAnimationFrame(onFrame);
+    };
+    requestAnimationFrame(onFrame);
+    return () => {
+      done = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canvasRef.current, redrawTrigger]);
-
-  const loadAudioSamples = async (audioContext: AudioContext) => {
-    const buffers = await Promise.all(
-      audioSamples.map(async (url) => {
-        const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-        return audioContext.decodeAudioData(arrayBuffer);
-      })
-    );
-    setAudioBuffers(buffers);
-
-    setRedrawTrigger((prev) => prev + 1);
-  };
-
-  useEffect(() => {
-    const audioContext = audioContextRef.current;
-    if (audioContext) {
-      loadAudioSamples(audioContext);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [audioContextRef.current]);
+  }, []);
 
   const enabledCellsFromSubscribe = useSubscribe(
     room?.r,
@@ -317,12 +340,11 @@ function Grid({
     shareInfo?.cells ??
     EMPTY_CELLS;
 
-  const sources = useRef<Record<string, SourceNode>>({});
-
   useEffect(() => {
     const audioContext = audioContextRef.current;
     const analyser = analyserRef.current;
-    if (!audioBuffers.length || !audioContext || !analyser) {
+    const audioBuffers = audioBuffersRef.current;
+    if (!audioContext || !analyser || !audioBuffers) {
       return;
     }
 
@@ -380,7 +402,14 @@ function Grid({
         }
       }
     }
-  }, [audioBuffers, enabledCells, sources, hoveredID, exclusive]);
+  }, [
+    audioBuffersLoaded,
+    audioInitialized,
+    tillAudioStart,
+    enabledCells,
+    hoveredID,
+    exclusive,
+  ]);
 
   const longPressTimeoutHandle = useRef<ReturnType<typeof setTimeout>>();
 
@@ -449,20 +478,28 @@ function Grid({
 
   return (
     <div>
-      <div className={styles.presenceContainer}>
+      <div className={styles.presenceOrMessageContainer}>
         <p
-          className={classNames(styles.audioStartMessage, {
-            [styles.hidden]: audioInitialized,
+          className={classNames(styles.presenceOrMessage, {
+            [styles.hidden]: audioInitialized || tillAudioStart !== undefined,
           })}
         >
           Click or tap anywhere to start audio 🔊
         </p>
+        <p
+          className={classNames(styles.presenceOrMessage, {
+            [styles.hidden]: audioInitialized || tillAudioStart === undefined,
+          })}
+        >
+          {`Starting in ${Math.ceil((tillAudioStart ?? 0) / 1000)}
+          ...`}
+        </p>
         <div
-          className={classNames(styles.presenceBarContainer, {
+          className={classNames(styles.presenceOrMessage, {
             [styles.hidden]: !audioInitialized,
           })}
         >
-          <PresenceBar r={room?.r} />
+          <PresenceAvatars r={room?.r} />
         </div>
       </div>
       <canvas

@@ -7,22 +7,22 @@ import { colorStringForColorID } from "../reflect/model/colors";
 import { PLAY_M } from "../reflect/play/mutators";
 import { SHARE_M } from "../reflect/share/mutators";
 
-export default function PresenceBar({
+export default function PresenceAvatars({
   r,
 }: {
   r: Reflect<PLAY_M | SHARE_M> | undefined;
 }) {
   const presentClients = usePresentClients(r);
   return (
-    <div className={styles.presenceAvatars}>
+    <>
       {presentClients.map((client) => (
-        <PresenceAvatars client={client} key={client.id} />
+        <PresenceAvatar client={client} key={client.id} />
       ))}
-    </div>
+    </>
   );
 }
 
-function PresenceAvatars({ client }: { client: Client }) {
+function PresenceAvatar({ client }: { client: Client }) {
   const { color, location } = client;
 
   return (

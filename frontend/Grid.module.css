@@ -1,20 +1,23 @@
 /* src/Grid.css */
 
-.presenceContainer {
+.presenceOrMessageContainer {
   position: relative;
   height: 2rem;
-  margin-bottom: 2rem;
+  padding: 3px;
+  margin-bottom: 1rem;
 }
 
-.audioStartMessage {
+.presenceOrMessage {
   margin: 0;
-  height: 2rem;
   line-height: 2rem;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  transition: opacity 0.5s;
 }
 
 .hidden {
   opacity: 0;
-  transition: opacity 0.5s;
 }
 
 .grid {
