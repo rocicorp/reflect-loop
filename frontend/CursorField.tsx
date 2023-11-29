@@ -55,7 +55,7 @@ export default function CursorField({
 
   const presentClients = usePresentClients(r);
   return (
-    <>
+    <div>
       {presentClients.map((client) => (
         <Cursor
           selfClientID={r.clientID}
@@ -65,7 +65,7 @@ export default function CursorField({
           docRect={docRect}
         />
       ))}
-    </>
+    </div>
   );
 }
 
