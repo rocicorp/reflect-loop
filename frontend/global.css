@@ -78,6 +78,22 @@ button:focus-visible {
   outline: 1px auto #fc208a;
 }
 
+.animated-button {
+  animation: wiggleAndScale 0.6s infinite;
+}
+
+@keyframes wiggleAndScale {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: scale(1.1) rotate(-10deg);
+  }
+  20%, 40%, 60%, 80% {
+    transform: scale(1.1) rotate(10deg);
+  }
+}
+
 /* Responsive 📱 */
 
 /* For mobile devices with width up to 600px */

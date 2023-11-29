@@ -67,6 +67,7 @@ const Footer = ({
               handleCta();
               e.stopPropagation();
             }}
+            id="primary-cta"
             className={classNames(styles.footerLink, styles.primaryCta)}
           >
             {ctaText}
