@@ -55,7 +55,7 @@ export default function CursorField({
 
   const presentClients = usePresentClients(r);
   return (
-    <div className={styles.className}>
+    <div className={styles.cursorField}>
       {presentClients.map((client) => (
         <Cursor
           selfClientID={r.clientID}
