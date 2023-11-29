@@ -47,7 +47,7 @@ export default function Home({
           content={
             shareInfo
               ? `https://loop.reflect.net/api/og?s=${shareInfo.encodedCells}`
-              : `https://loop.reflect.net/api/og?s=076-118-126-208-218-226-253-288-298-333-483-503-523-586-613`
+              : `https://loop.reflect.net/api/og?s=040-153-220-261-362-453-511-572`
           }
         />
         <meta
@@ -55,7 +55,7 @@ export default function Home({
           content={
             shareInfo
               ? `https://loop.reflect.net/api/og?s=${shareInfo.encodedCells}`
-              : `https://loop.reflect.net/api/og?s=076-118-126-208-218-226-253-288-298-333-483-503-523-586-613`
+              : `https://loop.reflect.net/api/og?s=040-153-220-261-362-453-511-572`
           }
         />
         <meta name="twitter:card" content="summary_large_image" />
