@@ -478,7 +478,7 @@ function Grid({
   });
 
   return (
-    <div>
+    <div className={styles.gridContainer}>
       <div className={styles.presenceOrMessageContainer}>
         <p
           className={classNames(styles.presenceOrMessage, {

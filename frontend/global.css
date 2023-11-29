@@ -104,7 +104,7 @@ button:focus-visible {
   }
 }
 
-@media screen and (max-height: 830px) {
+@media screen and (max-height: 870px) {
   #__next {
     width: 50vh;
   }
