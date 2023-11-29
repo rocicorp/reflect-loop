@@ -61,6 +61,22 @@
   transition: all 0.4s ease-in-out;
 }
 
+.animated-button {
+  animation: wiggleAndScale 3s infinite;
+}
+
+@keyframes wiggleAndScale {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: scale(1.1) rotate(-10deg);
+  }
+  20%, 40%, 60%, 80% {
+    transform: scale(1.1) rotate(10deg);
+  }
+}
+
 .footerShare {
   color: rgba(255, 255, 255, 1);
   margin-right: 0.5rem;
@@ -85,7 +101,7 @@
   }
 }
 
-@media screen and (max-height: 830px) {
+@media screen and (max-height: 870px) {
   .footer {
     margin-top: 0.5rem;
   }

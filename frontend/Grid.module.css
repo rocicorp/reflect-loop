@@ -1,5 +1,9 @@
 /* src/Grid.css */
 
+.gridContainer {
+  width: 100%;
+}
+
 .presenceOrMessageContainer {
   position: relative;
   height: 2rem;
@@ -64,7 +68,7 @@
   margin: 20px auto;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
-  width: 444px;
+  width: 100%;
 }
 
 /* Responsive 📱 */
@@ -76,7 +80,7 @@
   }
 }
 
-@media screen and (max-height: 830px) {
+@media screen and (max-height: 870px) {
   .waveform {
     width: 100%;
   }

@@ -203,6 +203,17 @@ const animateMessage = (messageDiv: HTMLDivElement | null) => {
   );
 };
 
+const animateButton = (elementId: string) => {
+  const element = document.getElementById(elementId);
+  if (element) {
+      element.classList.add('animated-button');
+
+      setTimeout(() => {
+          element.classList.remove('animated-button');
+      }, 600);
+  }
+};
+
 const App = ({
   shareInfo,
   exclusive,
@@ -258,6 +269,7 @@ const App = ({
   const handleCellClick = () => {
     if (shareInfo?.type === "snapshot") {
       animateMessage(createMessageRef.current);
+      animateButton("primary-cta");
     }
   };
 
