@@ -204,7 +204,6 @@ const animateMessage = (messageDiv: HTMLDivElement | null) => {
 };
 
 const animateButton = (elementId: string) => {
-  // Add the class to the element
   const element = document.getElementById(elementId);
   if (element) {
       element.classList.add('animated-button');
