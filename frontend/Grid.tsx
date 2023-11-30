@@ -18,16 +18,14 @@ import { Room } from "./room";
 import { ShareInfo } from "./share";
 import { event } from "nextjs-google-analytics";
 
-export const LOOP_LENGTH_MS = 8 * 1000;
+export const LOOP_LENGTH_MS = 8;
 
-function getNextLoopStartTime(now: number) {
-  if (now % LOOP_LENGTH_MS === 0) {
-    return 0;
-  }
-  return now + LOOP_LENGTH_MS - (now % LOOP_LENGTH_MS);
+function getAlignedOffsetSeconds(nowMs: number) {
+  return (nowMs / 1000) % LOOP_LENGTH_MS;
 }
 
 const EMPTY_CELLS: Record<string, Cell> = {};
+let firstLogged = false;
 
 class SourceNode {
   #audioBufferSourceNode: AudioBufferSourceNode;
@@ -153,7 +151,6 @@ function Grid({
 
   const [audioBuffersLoaded, setAudioBuffersLoaded] = useState<boolean>(false);
   const [audioInitialized, setAudioInitialized] = useState<boolean>(false);
-  const [tillAudioStart, setTillAudioStart] = useState<number>();
   const [hoveredID, setHoveredID] = useState<string>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const audioContextRef = useRef<AudioContext>();
@@ -227,17 +224,6 @@ function Grid({
       }
       try {
         await audioContext.resume();
-        await audioContext.suspend();
-        const nextLoopStart = getNextLoopStartTime(Date.now());
-        const till = nextLoopStart - Date.now();
-        setTillAudioStart(till);
-        const intervalID = setInterval(() => {
-          setTillAudioStart(nextLoopStart - Date.now());
-        }, 500);
-        setTimeout(async () => {
-          clearInterval(intervalID);
-          await audioContext.resume();
-        }, till);
         removeEventListeners();
       } catch (e) {
         console.error("Failed to start audio context", e);
@@ -259,7 +245,13 @@ function Grid({
     const analyser = analyserRef.current;
     const audioBuffers = audioBuffersRef.current;
     const canvas = canvasRef.current;
-    if (!audioContext || !analyser || !audioBuffers || !canvas) {
+    if (
+      !audioContext ||
+      audioContext.state !== "running" ||
+      !analyser ||
+      !audioBuffers ||
+      !canvas
+    ) {
       return;
     }
     const bufferLength = analyser.frequencyBinCount;
@@ -303,8 +295,7 @@ function Grid({
     // Loop progress bar
     if (audioBuffers.length > 0 && audioBuffers[0].duration) {
       const progress =
-        (audioContext.currentTime % audioBuffers[0].duration) /
-        audioBuffers[0].duration;
+        getAlignedOffsetSeconds(Date.now()) / audioBuffers[0].duration;
       const progressBarWidth = progress * width;
       canvasCtx.fillStyle = "rgba(255, 255, 255, 0.1)";
       canvasCtx.fillRect(0, 0, progressBarWidth, height);
@@ -345,10 +336,11 @@ function Grid({
     const audioContext = audioContextRef.current;
     const analyser = analyserRef.current;
     const audioBuffers = audioBuffersRef.current;
-    if (!audioContext || !analyser || !audioBuffers) {
+    if (!audioInitialized || !audioContext || !analyser || !audioBuffers) {
       return;
     }
 
+    const now = Date.now();
     const hoveredCoords =
       hoveredID === undefined ? undefined : idToCoords(hoveredID);
     for (let y = 0; y < GRID_SIZE; y++) {
@@ -388,7 +380,7 @@ function Grid({
           const gain = source.gain;
           gain.setValueAtTime(0, 0);
           gain.setTargetAtTime(activeTargetGain, audioContext.currentTime, 0.2);
-          source.start(0, audioContext.currentTime % audioBuffers[0].duration);
+          source.start(0, getAlignedOffsetSeconds(now));
 
           sourcesRef.current[id] = source;
         }
@@ -406,7 +398,6 @@ function Grid({
   }, [
     audioBuffersLoaded,
     audioInitialized,
-    tillAudioStart,
     enabledCells,
     hoveredID,
     exclusive,
@@ -482,18 +473,10 @@ function Grid({
       <div className={styles.presenceOrMessageContainer}>
         <p
           className={classNames(styles.presenceOrMessage, {
-            [styles.hidden]: audioInitialized || tillAudioStart !== undefined,
+            [styles.hidden]: audioInitialized,
           })}
         >
           Click or tap anywhere to start audio 🔊
-        </p>
-        <p
-          className={classNames(styles.presenceOrMessage, {
-            [styles.hidden]: audioInitialized || tillAudioStart === undefined,
-          })}
-        >
-          {`Starting in ${Math.ceil((tillAudioStart ?? 0) / 1000)}
-          ...`}
         </p>
         <div
           className={classNames(styles.presenceOrMessage, {
