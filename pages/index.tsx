@@ -45,7 +45,7 @@ export default function Home({
         <meta
           property="og:image"
           content={
-            shareInfo
+            shareInfo && shareInfo.encodedCells
               ? `https://loop.reflect.net/api/og?s=${shareInfo.encodedCells}`
               : `https://loop.reflect.net/api/og?s=040-153-220-261-362-453-511-572`
           }
@@ -53,7 +53,7 @@ export default function Home({
         <meta
           property="twitter:image"
           content={
-            shareInfo
+            shareInfo && shareInfo.encodedCells
               ? `https://loop.reflect.net/api/og?s=${shareInfo.encodedCells}`
               : `https://loop.reflect.net/api/og?s=040-153-220-261-362-453-511-572`
           }
