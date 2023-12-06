@@ -329,8 +329,7 @@ function Grid({
 
   const enabledCells =
     (room?.type === "share" ? room.fixedCells : enabledCellsFromSubscribe) ??
-    shareInfo?.cells ??
-    EMPTY_CELLS;
+    (shareInfo?.type === "snapshot" ? shareInfo.cells : EMPTY_CELLS);
 
   useEffect(() => {
     const audioContext = audioContextRef.current;
