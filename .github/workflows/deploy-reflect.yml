@@ -29,7 +29,8 @@ jobs:
       - name: publish
         env:
           REFLECT_AUTH_KEY: ${{ secrets.REFLECT_AUTH_KEY }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
         run: |
-          npx reflect publish --server-path="./reflect/orchestrator/server.ts" --reflect-channel=canary --app=loop-orchestrator-${GITHUB_HEAD_REF//[^a-zA-Z0-9]/-} --auth-key-from-env=REFLECT_AUTH_KEY
-          npx reflect publish --server-path="./reflect/share/server.ts" --reflect-channel=canary --app=loop-share-${GITHUB_HEAD_REF//[^a-zA-Z0-9]/-} --auth-key-from-env=REFLECT_AUTH_KEY
-          npx reflect publish --server-path="./reflect/play/server.ts" --reflect-channel=canary --app=loop-play-${GITHUB_HEAD_REF//[^a-zA-Z0-9]/-} --auth-key-from-env=REFLECT_AUTH_KEY
+          npx reflect publish --server-path="./reflect/orchestrator/server.ts" --reflect-channel=canary --app=loop-orchestrator-${BRANCH_NAME//[^a-zA-Z0-9]/-} --auth-key-from-env=REFLECT_AUTH_KEY
+          npx reflect publish --server-path="./reflect/share/server.ts" --reflect-channel=canary --app=loop-share-${BRANCH_NAME//[^a-zA-Z0-9]/-} --auth-key-from-env=REFLECT_AUTH_KEY
+          npx reflect publish --server-path="./reflect/play/server.ts" --reflect-channel=canary --app=loop-play-${BRANCH_NAME//[^a-zA-Z0-9]/-} --auth-key-from-env=REFLECT_AUTH_KEY
