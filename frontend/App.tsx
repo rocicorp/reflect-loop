@@ -19,13 +19,13 @@ import ShareModal from "./ShareModal";
 import { useElementSize, useWindowSize } from "./sizeHooks";
 import { event } from "nextjs-google-analytics";
 import styles from "./App.module.css";
+import { getReflectServer } from "./host";
 
-const orchestratorServer =
-  process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER ?? "http://127.0.0.1:8080/";
-const playServer =
-  process.env.NEXT_PUBLIC_PLAY_SERVER ?? "http://127.0.0.1:8080/";
-const shareServer =
-  process.env.NEXT_PUBLIC_SHARE_SERVER ?? "http://127.0.0.1:8080/";
+const orchestratorServer = getReflectServer(
+  process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER
+);
+const playServer = getReflectServer(process.env.NEXT_PUBLIC_PLAY_SERVER);
+const shareServer = getReflectServer(process.env.NEXT_PUBLIC_SHARE_SERVER);
 
 type RoomAssignment = { roomID: string; color: string };
 
@@ -206,11 +206,11 @@ const animateMessage = (messageDiv: HTMLDivElement | null) => {
 const animateButton = (elementId: string) => {
   const element = document.getElementById(elementId);
   if (element) {
-      element.classList.add('animated-button');
+    element.classList.add("animated-button");
 
-      setTimeout(() => {
-          element.classList.remove('animated-button');
-      }, 600);
+    setTimeout(() => {
+      element.classList.remove("animated-button");
+    }, 600);
   }
 };
 

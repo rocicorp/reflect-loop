@@ -27,6 +27,5 @@ We will improve Reflect's APIs over time to not require separate apps for this t
 
 # Publish
 
-1. Remove the `apps` key from each of the `reflect.config.json` files
-2. Publish each app to reflect with `npx reflect publish`
-3. Publish the frontend to some host, i.e., Vercel and set `NEXT_PUBLIC_ORCHESTRATOR_SERVER`, `NEXT_PUBLIC_PLAY_SERVER`, and `NEXT_PUBLIC_SHARE_SERVER` accordingly.
+1. Publish each app to reflect with `npx reflect publish`
+2. Publish the frontend to some host, i.e., Vercel and set `NEXT_PUBLIC_ORCHESTRATOR_SERVER`, `NEXT_PUBLIC_PLAY_SERVER`, and `NEXT_PUBLIC_SHARE_SERVER` accordingly.

@@ -59,7 +59,7 @@ async function setCellEnabled(
         await cellGenerated.delete(tx, id);
       }
     }
-    const client = await getClient(tx, tx.clientID);
+    const client = await getClient(tx);
     await cellGenerated.put(tx, {
       id,
       color: client?.color ?? colorIDFromID(tx.clientID),

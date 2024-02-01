@@ -39,7 +39,7 @@ export default function PresenceAvatars({
               key={"overflow"}
             />
           ) : (
-            <PresenceAvatar client={client} key={client.id} />
+            <PresenceAvatar client={client} key={client.clientID} />
           )
         )}
     </div>
