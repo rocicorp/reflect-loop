@@ -1,5 +1,5 @@
 import * as v from "@badrap/valita";
-import { Update, generate } from "@rocicorp/rails";
+import { Update, generatePresence } from "@rocicorp/rails";
 import { WriteTransaction } from "@rocicorp/reflect";
 
 const cursorSchema = v.object({ x: v.number(), y: v.number() });
@@ -8,7 +8,7 @@ const locationSchema = v.object({
   country: v.string(),
 });
 const clientModelSchema = v.object({
-  id: v.string(),
+  clientID: v.string(),
   color: v.string(),
   cursor: cursorSchema.optional(),
   location: locationSchema.optional(),
@@ -19,7 +19,7 @@ export type Cursor = v.Infer<typeof cursorSchema>;
 export type Location = v.Infer<typeof locationSchema>;
 export type Client = v.Infer<typeof clientModelSchema>;
 export type ClientUpdate = Update<Client>;
-const clientGenerated = generate(
+const clientGenerated = generatePresence(
   "client",
   clientModelSchema.parse.bind(clientModelSchema)
 );
@@ -30,21 +30,17 @@ const initClient = async (
   tx: WriteTransaction,
   { color }: { color: string }
 ) => {
-  const id = tx.clientID;
   const client = {
-    id,
     color,
   };
-  await clientGenerated.put(tx, client);
+  await clientGenerated.set(tx, client);
 };
 
 const updateLocation = async (tx: WriteTransaction, location: Location) => {
   if (!allowLocation(location)) {
     return;
   }
-  const id = tx.clientID;
   const client = {
-    id,
     location,
   };
   await clientGenerated.update(tx, client);
@@ -60,14 +56,12 @@ function allowLocation(location: Location): boolean {
 
 const updateCursor = async (tx: WriteTransaction, cursor: Cursor) => {
   await clientGenerated.update(tx, {
-    id: tx.clientID,
     cursor,
   });
 };
 
 const markAsTouchClient = async (tx: WriteTransaction) => {
   await clientGenerated.update(tx, {
-    id: tx.clientID,
     isTouch: true,
   });
 };

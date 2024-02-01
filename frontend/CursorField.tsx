@@ -60,7 +60,7 @@ export default function CursorField({
         <Cursor
           selfClientID={r.clientID}
           client={client}
-          key={client.id}
+          key={client.clientID}
           appRect={appRect}
           docRect={docRect}
         />
@@ -88,7 +88,7 @@ function Cursor({
   return (
     <div
       className={classNames(styles.cursor, {
-        [styles.cursorSelf]: client.id === selfClientID,
+        [styles.cursorSelf]: client.clientID === selfClientID,
         [styles.cursorTouch]: client.isTouch,
       })}
       style={{

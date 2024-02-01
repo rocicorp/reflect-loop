@@ -5,11 +5,7 @@ import { PLAY_M } from "./play/mutators";
 import { SHARE_M } from "./share/mutators";
 
 export function useSelfColor(r: Reflect<PLAY_M | SHARE_M> | undefined) {
-  return useSubscribe(
-    r,
-    async (tx) => (await getClient(tx, tx.clientID))?.color,
-    null
-  );
+  return useSubscribe(r, async (tx) => (await getClient(tx))?.color, null);
 }
 
 export function usePresentClients(
@@ -21,7 +17,7 @@ export function usePresentClients(
     async (tx) => {
       const presentClients = [];
       for (const clientID of presentClientIDs) {
-        const client = await getClient(tx, clientID);
+        const client = await getClient(tx, { clientID });
         if (client) {
           presentClients.push(client);
         }
