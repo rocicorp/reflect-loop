@@ -22,10 +22,19 @@ import styles from "./App.module.css";
 import { getReflectServer } from "./host";
 
 const orchestratorServer = getReflectServer(
-  process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER
+  process.env.NEXT_PUBLIC_ORCHESTRATOR_SERVER,
+  "NEXT_PUBLIC_ORCHESTRATOR_SERVER"
 );
-const playServer = getReflectServer(process.env.NEXT_PUBLIC_PLAY_SERVER);
-const shareServer = getReflectServer(process.env.NEXT_PUBLIC_SHARE_SERVER);
+const playServer = getReflectServer(
+  process.env.NEXT_PUBLIC_PLAY_SERVER,
+  "NEXT_PUBLIC_PLAY_SERVER"
+);
+const shareServer = getReflectServer(
+  process.env.NEXT_PUBLIC_SHARE_SERVER,
+  "NEXT_PUBLIC_SHARE_SERVER"
+);
+
+console.log("server URLs", { orchestratorServer, playServer, shareServer });
 
 type RoomAssignment = { roomID: string; color: string };
 
