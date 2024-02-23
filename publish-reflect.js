@@ -36,21 +36,20 @@ async function publish(appBaseName, serverPath, envVar) {
     .replace(/^[^a-z]/, "")
     .replace(/[^a-z0-9-]/g, "-");
 
-  const output = await runCommand("npx", [
-    "reflect",
-    "publish",
-    `--app=${appName}`,
-    `--server-path=${serverPath}`,
-    "--reflect-channel=canary",
-    "--auth-key-from-env=REFLECT_AUTH_KEY",
-  ]);
-  const lines = output.toString().split("\n");
-  const success = lines.findIndex((line) =>
-    line.includes("🎁 Published successfully to:")
+  const output = JSON.parse(
+    await runCommand("npx", [
+      "reflect",
+      "publish",
+      `--app=${appName}`,
+      `--server-path=${serverPath}`,
+      "--reflect-channel=canary",
+      "--auth-key-from-env=REFLECT_AUTH_KEY",
+      "--output=json",
+    ])
   );
-  const url = lines[success + 1];
-
-  fs.appendFileSync("./.env", `${envVar}=${url}` + "\n");
+  if (output.success) {
+    fs.appendFileSync("./.env", `${envVar}=${output.url}` + "\n");
+  }
 }
 
 function runCommand(command, args) {
