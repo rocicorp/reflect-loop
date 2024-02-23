@@ -14,7 +14,7 @@
   "dependencies": {
     "@badrap/valita": "^0.3.0",
     "@rocicorp/rails": "^0.10.0",
-    "@rocicorp/reflect": "^0.39.202402011004",
+    "@rocicorp/reflect": "^0.39.202402230127",
     "@vercel/og": "^0.5.20",
     "classnames": "^2.3.2",
     "nanoid": "^5.0.3",

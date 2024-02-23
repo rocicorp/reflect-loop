@@ -20,9 +20,9 @@ We will improve Reflect's APIs over time to not require separate apps for this t
 2. `npm install`
 3. In four different terminal tabs:
 
-- `cd reflect/orchestrator; npx reflect dev`
-- `cd reflect/play; npx reflect dev -p 8081`
-- `cd reflect/share; npx reflect dev -p 8082`
+- `cd reflect/orchestrator; npx reflect dev --server-path=./server.ts`
+- `cd reflect/play; npx reflect dev --server-path=./server.ts -p 8081`
+- `cd reflect/share; npx reflect dev --server-path=./server.ts -p 8082`
 - `NEXT_PUBLIC_ORCHESTRATOR_SERVER=http://localhost:8080 NEXT_PUBLIC_PLAY_SERVER=http://localhost:8081 NEXT_PUBLIC_SHARE_SERVER=http://localhost:8082  npm run dev`
 
 # Publish
